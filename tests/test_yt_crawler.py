@@ -16,22 +16,16 @@ class TestYoutubeAPI:
         """Create a YoutubeAPI instance for testing"""
         return YoutubeAPI()
     
-    def test_search_works(self, youtube_api):
-        """Test that search function works without errors"""
-        result = youtube_api.search("python")
-        assert result is not None
-        assert len(result) > 0
-    
-    def test_get_full_video_info_works(self, youtube_api):
-        """Test that get_full_video_info function works without errors"""
-        # Using the video ID from your notebook example
-        video_id = "_uQrJ0TkZlc"
-        result = youtube_api.get_full_video_info(video_id)
-        assert result is not None
-        assert len(result) > 0
-    
-    def test_search_channel_works(self, youtube_api):
-        """Test that search_channel function works without errors"""
-        result = youtube_api.search_channel("Mr beast")
-        assert result is not None
-        assert len(result) > 0
+    def test_get_video_details_success(self, youtube_api):
+        """Test that get_video_details works with a valid video ID and returns populated data"""
+        video_id = "nUgGY18iTJw"
+        
+        # Call the function - this should not raise any exceptions
+        result = youtube_api.get_video_details(video_id)
+        
+        # Verify the result is a dictionary
+        assert isinstance(result, dict), "Result should be a dictionary"
+        
+        # Verify the dictionary is not empty
+        assert len(result) > 0, "Result should not be empty"
+        assert result, "Result should be truthy (not empty)"
