@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import json
 
 def xml_transcript_to_json_bs4(xml_string):
     """Convert YouTube transcript XML to JSON using BeautifulSoup"""

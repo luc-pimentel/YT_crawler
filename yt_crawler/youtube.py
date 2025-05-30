@@ -1,12 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-from decouple import config
 from .utils import xml_transcript_to_json_bs4
 from .config import HEADERS
 
-
-YOUTUBE_API_KEY = config('YOUTUBE_API_KEY', None)
 
 
 class YoutubeAPI:
