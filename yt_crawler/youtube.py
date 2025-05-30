@@ -165,3 +165,24 @@ class YoutubeAPI:
         comments_json = {'comments': comments}
 
         return comments_json
+    
+
+    def search(self, search_term):
+        # URL encode the search term to handle spaces and special characters
+        quoted_search_term = requests.utils.quote(search_term)
+        url = f"https://www.youtube.com/results?search_query={quoted_search_term}"
+        
+        response = requests.get(url, headers=HEADERS)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        soup_str = str(soup.find_all()[0])
+        raw_search_json = json.loads(soup_str.split('var ytInitialData = ')[1].split('};')[0] + '}')
+        
+        search_contents = raw_search_json.get('contents').get('twoColumnSearchResultsRenderer').get('primaryContents').get('sectionListRenderer').get('contents')
+        
+        item_section_renderer_contents = search_contents[0].get('itemSectionRenderer').get('contents')
+        
+        videos = [video.get('videoRenderer') for video in item_section_renderer_contents if video.get('videoRenderer')]
+        
+        return {'search_results': videos}
+
