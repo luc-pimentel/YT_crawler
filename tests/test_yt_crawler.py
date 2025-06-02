@@ -95,3 +95,24 @@ class TestYoutubeAPI:
         search_results = result.get('search_results')
         assert len(search_results) > 0, "Search results list should not be empty"
         assert search_results, "Search results list should be truthy (not empty)"
+
+
+    def test_get_trending_videos_success(self, youtube_api):
+        """Test that get_trending_videos works and returns populated data"""
+        
+        # Call the function - this should not raise any exceptions
+        result = youtube_api.get_trending_videos()
+        
+        # Verify the result is a dictionary
+        assert isinstance(result, dict), "Result should be a dictionary"
+        
+        # Verify the dictionary contains the 'trending' key
+        assert result.get('trending') is not None, "Result should contain 'trending' key"
+        
+        # Verify the trending value is a list
+        assert isinstance(result.get('trending'), list), "Trending should be a list"
+        
+        # Verify the trending list is not empty
+        trending = result.get('trending')
+        assert len(trending) > 0, "Trending list should not be empty"
+        assert trending, "Trending list should be truthy (not empty)"
