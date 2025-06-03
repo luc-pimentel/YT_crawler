@@ -53,6 +53,7 @@ class YoutubeAPI:
             raise Exception("Video has no transcript available")
 
         caption_url = captions_element.get('playerCaptionsTracklistRenderer').get('captionTracks')[0].get('baseUrl')
+        print(caption_url)
         caption_request = requests.get(caption_url)
         video_transcript = xml_transcript_to_json_bs4(caption_request.text)
 
