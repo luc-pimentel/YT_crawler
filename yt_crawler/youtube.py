@@ -21,25 +21,7 @@ class YoutubeAPI:
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
         
         # Get the webpage content
-        r = requests.get(youtube_url)
-        r.raise_for_status()
-        
-        # Parse with BeautifulSoup
-        soup = BeautifulSoup(r.text, "html.parser")
-        
-        # Find all script tags
-        scripts = soup.find_all('script')
-        
-        # Find the script text containing ytInitialPlayerResponse
-        script_text = next(
-            (script.text.split('var ytInitialPlayerResponse = ')[1][:-1]
-            for script in scripts 
-            if script.string and 'var ytInitialPlayerResponse = ' in script.string),
-            None
-        )
-        
-        # Parse the JSON from the script text
-        initial_player_response_json = json.loads(script_text) if script_text else {}
+        initial_player_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialPlayerResponse')
 
         video_details = initial_player_response_json.get('videoDetails')
 
@@ -63,25 +45,7 @@ class YoutubeAPI:
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
             
             # Get the webpage content
-        r = requests.get(youtube_url)
-        r.raise_for_status()
-            
-            # Parse with BeautifulSoup
-        soup = BeautifulSoup(r.text, "html.parser")
-            
-            # Find all script tags
-        scripts = soup.find_all('script')
-            
-            # Find the script text containing ytInitialPlayerResponse
-        script_text = next(
-                (script.text.split('var ytInitialPlayerResponse = ')[1][:-1]
-                for script in scripts 
-                if script.string and 'var ytInitialPlayerResponse = ' in script.string),
-                None
-            )
-            
-            # Parse the JSON from the script text
-        initial_player_response_json = json.loads(script_text) if script_text else {}
+        initial_player_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialPlayerResponse')
 
         caption_url = initial_player_response_json.get('captions').get('playerCaptionsTracklistRenderer').get('captionTracks')[0].get('baseUrl')
         caption_request = requests.get(caption_url)

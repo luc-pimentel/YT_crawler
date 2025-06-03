@@ -40,8 +40,6 @@ def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=Non
     Raises:
         Exception: If the variable is not found or JSON parsing fails
     """
-    if headers is None:
-        headers = HEADERS
     
     # Get the webpage content
     response = requests.get(url, headers=headers)
