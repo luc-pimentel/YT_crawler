@@ -1,13 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-from .utils import xml_transcript_to_json_bs4
+from .utils import xml_transcript_to_json_bs4, extract_youtube_initial_data
 from .config import HEADERS
 
 
-
 class YoutubeAPI:
-
 
     def get_video_details(self, video_id):
         """
@@ -94,46 +92,24 @@ class YoutubeAPI:
 
     def get_video_comments(self, video_id):
         """
-        Get video details from YouTube video ID
+        Get video comments from YouTube video ID
             
         Args:
             video_id (str): YouTube video ID
                 
         Returns:
-            dict: Video details including title, description, view count etc.
+            dict: Video comments data
         """
-            # Construct YouTube URL
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
-            
-            # Get the webpage content
-        r = requests.get(youtube_url)
-        r.raise_for_status()
-            
-        # Parse with BeautifulSoup
-        soup = BeautifulSoup(r.text, "html.parser")
-            
-        # Find all script tags
-        scripts = soup.find_all('script')
-            
-        # Find the script text containing ytInitialPlayerResponse
-        script_text = next(
-            (script.text.split('var ytInitialData = ')[1][:-1]
-            for script in scripts 
-            if script.string and 'var ytInitialData = ' in script.string),
-            None
-        )
-            
-            # Parse the JSON from the script text
-        initial_data_response_json = json.loads(script_text) if script_text else {}
+        initial_data_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialData')
 
-
-        comment_section_renderer_json = initial_data_response_json.get('engagementPanels')[0].get('engagementPanelSectionListRenderer').get('content').get('sectionListRenderer').get('contents')[0]
-
-        continuation_endpoint = comment_section_renderer_json.get('itemSectionRenderer').get('contents')[0].get('continuationItemRenderer').get('continuationEndpoint')
-
-        click_tracking_params = continuation_endpoint.get('clickTrackingParams')
-        continuation_token = continuation_endpoint.get('continuationCommand').get('token')
-
+        try:
+            comment_section_renderer_json = initial_data_response_json.get('engagementPanels')[0].get('engagementPanelSectionListRenderer').get('content').get('sectionListRenderer').get('contents')[0]
+            continuation_endpoint = comment_section_renderer_json.get('itemSectionRenderer').get('contents')[0].get('continuationItemRenderer').get('continuationEndpoint')
+            click_tracking_params = continuation_endpoint.get('clickTrackingParams')
+            continuation_token = continuation_endpoint.get('continuationCommand').get('token')
+        except (AttributeError, IndexError, TypeError):
+            raise Exception("Could not find comment continuation data")
 
         comment_url = "https://www.youtube.com/youtubei/v1/next?prettyPrint=false"
 
@@ -157,32 +133,41 @@ class YoutubeAPI:
         # Check the response
         if response.status_code == 200:
             data = response.json()
+        else:
+            raise Exception(f"Failed to fetch comments: HTTP {response.status_code}")
 
-        mutations_list = data.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
-
-        comments = [mutation.get('payload') for mutation in mutations_list if 'commentEntityPayload' in mutation.get('payload').keys()]
+        try:
+            mutations_list = data.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
+            comments = [mutation.get('payload') for mutation in mutations_list if 'commentEntityPayload' in mutation.get('payload').keys()]
+        except (AttributeError, TypeError):
+            raise Exception("Could not parse comment data from response")
 
         comments_json = {'comments': comments}
-
         return comments_json
     
 
     def search(self, search_term):
+        """
+        Search YouTube videos
+        
+        Args:
+            search_term (str): Search query
+            
+        Returns:
+            dict: Search results
+        """
         # URL encode the search term to handle spaces and special characters
         quoted_search_term = requests.utils.quote(search_term)
         url = f"https://www.youtube.com/results?search_query={quoted_search_term}"
         
-        response = requests.get(url, headers=HEADERS)
-        soup = BeautifulSoup(response.text, 'html.parser')
+        raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
         
-        soup_str = str(soup.find_all()[0])
-        raw_search_json = json.loads(soup_str.split('var ytInitialData = ')[1].split('};')[0] + '}')
-        
-        search_contents = raw_search_json.get('contents').get('twoColumnSearchResultsRenderer').get('primaryContents').get('sectionListRenderer').get('contents')
-        
-        item_section_renderer_contents = search_contents[0].get('itemSectionRenderer').get('contents')
-        
-        videos = [video.get('videoRenderer') for video in item_section_renderer_contents if video.get('videoRenderer')]
+        try:
+            search_contents = raw_search_json.get('contents').get('twoColumnSearchResultsRenderer').get('primaryContents').get('sectionListRenderer').get('contents')
+            item_section_renderer_contents = search_contents[0].get('itemSectionRenderer').get('contents')
+            videos = [video.get('videoRenderer') for video in item_section_renderer_contents if video.get('videoRenderer')]
+        except (AttributeError, IndexError, TypeError):
+            raise Exception("Could not parse search results")
         
         return {'search_results': videos}
 
@@ -195,30 +180,31 @@ class YoutubeAPI:
             dict: Dictionary containing trending videos list
         """
         url = "https://www.youtube.com/feed/trending"
+        raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
         
-        response = requests.get(url, headers=HEADERS)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        soup_str = str(soup.find_all()[0])
-        raw_search_json = json.loads(soup_str.split('var ytInitialData = ')[1].split('};')[0] + '}')
-        
-        two_column_browse_results_renderer = raw_search_json.get('contents').get('twoColumnBrowseResultsRenderer')
-        contents = two_column_browse_results_renderer.get('tabs')[0].get('tabRenderer').get('content').get('sectionListRenderer').get('contents')
+        try:
+            two_column_browse_results_renderer = raw_search_json.get('contents').get('twoColumnBrowseResultsRenderer')
+            contents = two_column_browse_results_renderer.get('tabs')[0].get('tabRenderer').get('content').get('sectionListRenderer').get('contents')
+        except (AttributeError, IndexError, TypeError):
+            raise Exception("Could not parse trending videos structure")
         
         videos_list = []
         
         for content in contents:
-            section_renderer = content.get('itemSectionRenderer').get('contents')[0]
-            
-            reel_renderer = section_renderer.get('reelShelfRenderer')
-            
-            if reel_renderer:
-                videos = section_renderer.get('reelShelfRenderer').get('items')
-            else:
-                shelf_renderer = section_renderer.get('shelfRenderer').get('content')
-                videos = shelf_renderer.get('expandedShelfContentsRenderer').get('items')
-            
-            videos_list.extend([video for video in videos if any(key in video for key in ['videoRenderer', 'shortsLockupViewModel'])])
+            try:
+                section_renderer = content.get('itemSectionRenderer').get('contents')[0]
+                reel_renderer = section_renderer.get('reelShelfRenderer')
+                
+                if reel_renderer:
+                    videos = section_renderer.get('reelShelfRenderer').get('items')
+                else:
+                    shelf_renderer = section_renderer.get('shelfRenderer').get('content')
+                    videos = shelf_renderer.get('expandedShelfContentsRenderer').get('items')
+                
+                videos_list.extend([video for video in videos if any(key in video for key in ['videoRenderer', 'shortsLockupViewModel'])])
+            except (AttributeError, TypeError):
+                # Skip sections that don't match expected structure
+                continue
         
         return {'trending': videos_list}
     
@@ -228,25 +214,16 @@ class YoutubeAPI:
         Scrapes YouTube's trending news page and returns trending video data.
         
         Returns:
-            list: A list of trending sections containing video information
+            dict: A dictionary containing trending news sections
         """
         url = "https://www.youtube.com/feed/news_destination"
+        initial_data_response_json = extract_youtube_initial_data(url, 'ytInitialData')
         
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, "html.parser")
+        try:
+            tabs = initial_data_response_json.get('contents').get('twoColumnBrowseResultsRenderer').get('tabs')
+            tab_contents = tabs[0].get('tabRenderer').get('content').get('richGridRenderer').get('contents')
+            trending_sections = [tab_content.get('richSectionRenderer').get('content').get('richShelfRenderer') for tab_content in tab_contents]
+        except (AttributeError, IndexError, TypeError):
+            raise Exception("Could not parse trending news structure")
         
-        scripts = soup.find_all('script')
-        
-        script_text = next((script.text.split('var ytInitialData = ')[1][:-1]
-                        for script in scripts 
-                        if script.string and 'var ytInitialData = ' in script.string),
-                        None
-                    )
-        
-        initial_data_response_json = json.loads(script_text) if script_text else {}
-        
-        tabs = initial_data_response_json.get('contents').get('twoColumnBrowseResultsRenderer').get('tabs')
-        tab_contents = tabs[0].get('tabRenderer').get('content').get('richGridRenderer').get('contents')
-        trending_sections = [tab_content.get('richSectionRenderer').get('content').get('richShelfRenderer') for tab_content in tab_contents]
-        
-        return {'trending_news':trending_sections}
+        return {'trending_news': trending_sections}
