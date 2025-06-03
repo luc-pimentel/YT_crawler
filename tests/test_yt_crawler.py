@@ -52,6 +52,14 @@ class TestYoutubeAPI:
         assert len(transcript) > 0, "Transcript list should not be empty"
         assert transcript, "Transcript list should be truthy (not empty)"
 
+    def test_get_video_transcript_no_captions(self, youtube_api):
+        """Test that get_video_transcript raises an exception for videos without captions"""
+        video_id = "v9ZApdKADxs"  # Video ID known to have no captions
+        
+        # Verify that an exception is raised when trying to get transcript for video without captions
+        with pytest.raises(Exception):
+            youtube_api.get_video_transcript(video_id)
+
 
     def test_get_video_comments_success(self, youtube_api):
         """Test that get_video_comments works with a valid video ID and returns populated data"""

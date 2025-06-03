@@ -47,7 +47,12 @@ class YoutubeAPI:
             # Get the webpage content
         initial_player_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialPlayerResponse')
 
-        caption_url = initial_player_response_json.get('captions').get('playerCaptionsTracklistRenderer').get('captionTracks')[0].get('baseUrl')
+        captions_element = initial_player_response_json.get('captions')
+
+        if not captions_element:
+            raise Exception("Video has no transcript available")
+
+        caption_url = captions_element.get('playerCaptionsTracklistRenderer').get('captionTracks')[0].get('baseUrl')
         caption_request = requests.get(caption_url)
         video_transcript = xml_transcript_to_json_bs4(caption_request.text)
 
