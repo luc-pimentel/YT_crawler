@@ -221,3 +221,32 @@ class YoutubeAPI:
             videos_list.extend([video for video in videos if any(key in video for key in ['videoRenderer', 'shortsLockupViewModel'])])
         
         return {'trending': videos_list}
+    
+
+    def get_trending_news(self):
+        """
+        Scrapes YouTube's trending news page and returns trending video data.
+        
+        Returns:
+            list: A list of trending sections containing video information
+        """
+        url = "https://www.youtube.com/feed/news_destination"
+        
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        scripts = soup.find_all('script')
+        
+        script_text = next((script.text.split('var ytInitialData = ')[1][:-1]
+                        for script in scripts 
+                        if script.string and 'var ytInitialData = ' in script.string),
+                        None
+                    )
+        
+        initial_data_response_json = json.loads(script_text) if script_text else {}
+        
+        tabs = initial_data_response_json.get('contents').get('twoColumnBrowseResultsRenderer').get('tabs')
+        tab_contents = tabs[0].get('tabRenderer').get('content').get('richGridRenderer').get('contents')
+        trending_sections = [tab_content.get('richSectionRenderer').get('content').get('richShelfRenderer') for tab_content in tab_contents]
+        
+        return {'trending_news':trending_sections}
