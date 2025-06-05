@@ -67,3 +67,44 @@ def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=Non
         return json.loads(script_text)
     except json.JSONDecodeError as e:
         raise Exception(f"Failed to parse {variable_name} JSON: {str(e)}")
+    
+
+
+def fetch_youtube_comments_data(continuation_token, click_tracking_params):
+    """
+    Fetch YouTube comments data using continuation token and click tracking params.
+    
+    Args:
+        continuation_token (str): The continuation token for pagination
+        click_tracking_params (str): The click tracking parameters
+        
+    Returns:
+        dict: Parsed JSON response from YouTube API
+        
+    Raises:
+        Exception: If the API request fails
+    """
+    comment_url = "https://www.youtube.com/youtubei/v1/next?prettyPrint=false"
+    
+    # Payload with continuation and click tracking
+    payload = {
+        "context": {
+            "client": {
+                "clientName": "WEB",
+                "clientVersion": "2.20240321.08.00",
+                "clientScreen": "WATCH"
+            }
+        },
+        "continuation": continuation_token,
+        "clickTracking": {
+            "clickTrackingParams": click_tracking_params
+        }
+    }
+    
+    response = requests.post(comment_url, json=payload, headers=HEADERS)
+    
+    # Check the response
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Failed to fetch comments: HTTP {response.status_code}")

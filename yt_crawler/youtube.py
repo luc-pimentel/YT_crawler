@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-from .utils import xml_transcript_to_json_bs4, extract_youtube_initial_data
+from .utils import *
 from .config import HEADERS
 
 
@@ -53,7 +53,6 @@ class YoutubeAPI:
             raise Exception("Video has no transcript available")
 
         caption_url = captions_element.get('playerCaptionsTracklistRenderer').get('captionTracks')[0].get('baseUrl')
-        print(caption_url)
         caption_request = requests.get(caption_url)
         video_transcript = xml_transcript_to_json_bs4(caption_request.text)
 
@@ -81,34 +80,11 @@ class YoutubeAPI:
         except (AttributeError, IndexError, TypeError):
             raise Exception("Could not find comment continuation data")
 
-        comment_url = "https://www.youtube.com/youtubei/v1/next?prettyPrint=false"
-
-        # Payload with continuation and click tracking
-        payload = {
-            "context": {
-                "client": {
-                    "clientName": "WEB",
-                    "clientVersion": "2.20240321.08.00",
-                    "clientScreen": "WATCH"
-                }
-            },
-            "continuation": continuation_token,
-            "clickTracking": {
-                "clickTrackingParams": click_tracking_params
-            }
-        }
-
-        response = requests.post(comment_url, json=payload, headers=HEADERS)
-
-        # Check the response
-        if response.status_code == 200:
-            data = response.json()
-        else:
-            raise Exception(f"Failed to fetch comments: HTTP {response.status_code}")
+        data = fetch_youtube_comments_data(continuation_token, click_tracking_params)
 
         try:
             mutations_list = data.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
-            comments = [mutation.get('payload') for mutation in mutations_list if 'commentEntityPayload' in mutation.get('payload').keys()]
+            comments = [mutation.get('payload').get('commentEntityPayload') for mutation in mutations_list if 'commentEntityPayload' in mutation.get('payload').keys()]
         except (AttributeError, TypeError):
             raise Exception("Could not parse comment data from response")
 
