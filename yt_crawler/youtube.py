@@ -59,12 +59,13 @@ class YoutubeAPI:
         return video_transcript
     
 
-    def get_video_comments(self, video_id):
+    def get_video_comments(self, video_id, n_comments=None):
         """
         Get video comments from YouTube video ID
             
         Args:
             video_id (str): YouTube video ID
+            n_comments (int, optional): Maximum number of comments to fetch. If None, fetches all comments.
                 
         Returns:
             dict: Video comments data
@@ -94,8 +95,12 @@ class YoutubeAPI:
             except (AttributeError, TypeError):
                 raise Exception("Could not parse comment data from response")
             
-            # Extract continuation data for next batch using the logic from your image
-                        # Extract continuation data for next batch - handle both possible response structures
+            # Check if we've reached the desired number of comments
+            if n_comments is not None and len(all_comments) >= n_comments:
+                print(f"Reached target of {n_comments} comments. Stopping fetch.")
+                break
+            
+            # Extract continuation data for next batch - handle both possible response structures
             try:
                 response_endpoint = data.get('onResponseReceivedEndpoints')[-1]
                 
@@ -117,6 +122,10 @@ class YoutubeAPI:
                 # No more continuation data available
                 continuation_token = None
                 print(f"No more comments to fetch. Final total: {len(all_comments)} comments")
+
+        # Truncate to exact number if n_comments is specified
+        if n_comments is not None:
+            all_comments = all_comments[:n_comments]
 
         comments_json = {'comments': all_comments}
         return comments_json

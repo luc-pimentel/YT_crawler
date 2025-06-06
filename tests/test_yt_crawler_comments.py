@@ -36,3 +36,52 @@ class TestYoutubeAPIComments:
         comments = result.get('comments')
         assert len(comments) > 0, "Comments list should not be empty"
         assert comments, "Comments list should be truthy (not empty)"
+
+    def test_get_video_comments_with_limit(self, youtube_api):
+        """Test that get_video_comments respects the n_comments limit"""
+        video_id = "v9ZApdKADxs"
+        n_comments = 20
+        
+        # Call the function with n_comments limit
+        result = youtube_api.get_video_comments(video_id, n_comments=n_comments)
+        
+        # Verify the result is a dictionary
+        assert isinstance(result, dict), "Result should be a dictionary"
+        
+        # Verify the dictionary contains the 'comments' key
+        assert result.get('comments') is not None, "Result should contain 'comments' key"
+        
+        # Verify the comments value is a list
+        comments = result.get('comments')
+        assert isinstance(comments, list), "Comments should be a list"
+        
+        # Verify the comments list has exactly the requested number of items
+        assert len(comments) == n_comments, f"Comments list should contain exactly {n_comments} items, got {len(comments)}"
+        
+        # Verify each comment is not None/empty
+        assert all(comment is not None for comment in comments), "All comments should be non-None"
+
+    def test_get_video_comments_with_none_limit(self, youtube_api):
+        """Test that get_video_comments with n_comments=None returns all comments (same as no parameter)"""
+        video_id = "v9ZApdKADxs"
+        
+        # Call the function with n_comments=None (explicit)
+        result_with_none = youtube_api.get_video_comments(video_id, n_comments=None)
+        
+        # Call the function without n_comments parameter (implicit None)
+        result_without_param = youtube_api.get_video_comments(video_id)
+        
+        # Verify both results are dictionaries
+        assert isinstance(result_with_none, dict), "Result with None should be a dictionary"
+        assert isinstance(result_without_param, dict), "Result without param should be a dictionary"
+        
+        # Verify both contain comments
+        comments_with_none = result_with_none.get('comments')
+        comments_without_param = result_without_param.get('comments')
+        
+        assert isinstance(comments_with_none, list), "Comments with None should be a list"
+        assert isinstance(comments_without_param, list), "Comments without param should be a list"
+        
+        # Verify we got a reasonable number of comments (more than our test limit of 20)
+        assert len(comments_with_none) > 20, \
+            f"Should return more than 20 comments when fetching all, got {len(comments_with_none)}"
