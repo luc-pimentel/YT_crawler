@@ -82,13 +82,43 @@ class YoutubeAPI:
 
         data = fetch_youtube_comments_data(continuation_token, click_tracking_params)
 
-        try:
-            mutations_list = data.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
-            comments = [mutation.get('payload').get('commentEntityPayload') for mutation in mutations_list if 'commentEntityPayload' in mutation.get('payload').keys()]
-        except (AttributeError, TypeError):
-            raise Exception("Could not parse comment data from response")
+        all_comments = []
+        
+        while continuation_token:
+            data = fetch_youtube_comments_data(continuation_token, click_tracking_params)
+            
+            try:
+                mutations_list = data.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
+                comments = [mutation.get('payload').get('commentEntityPayload') for mutation in mutations_list if 'commentEntityPayload' in mutation.get('payload').keys()]
+                all_comments.extend(comments)
+            except (AttributeError, TypeError):
+                raise Exception("Could not parse comment data from response")
+            
+            # Extract continuation data for next batch using the logic from your image
+                        # Extract continuation data for next batch - handle both possible response structures
+            try:
+                response_endpoint = data.get('onResponseReceivedEndpoints')[-1]
+                
+                # Try 'reloadContinuationItemsCommand' first
+                if 'reloadContinuationItemsCommand' in response_endpoint:
+                    continuation_item_renderer = response_endpoint.get('reloadContinuationItemsCommand').get('continuationItems')[-1]
+                # Fall back to 'appendContinuationItemsAction'
+                elif 'appendContinuationItemsAction' in response_endpoint:
+                    continuation_item_renderer = response_endpoint.get('appendContinuationItemsAction').get('continuationItems')[-1]
+                else:
+                    # Neither key found, no more continuation data
+                    continuation_token = None
+                    print(f"No more comments to fetch. Final total: {len(all_comments)} comments")
+                    continue
+                
+                continuation_token = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('continuationCommand').get('token')
+                click_tracking_params = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('clickTrackingParams')
+            except (AttributeError, IndexError, TypeError):
+                # No more continuation data available
+                continuation_token = None
+                print(f"No more comments to fetch. Final total: {len(all_comments)} comments")
 
-        comments_json = {'comments': comments}
+        comments_json = {'comments': all_comments}
         return comments_json
     
 
