@@ -81,12 +81,12 @@ class YoutubeAPI:
         except (AttributeError, IndexError, TypeError):
             raise Exception("Could not find comment continuation data")
 
-        data = fetch_youtube_comments_data(continuation_token, click_tracking_params)
+        data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/next?prettyPrint=false')
 
         all_comments = []
         
         while continuation_token:
-            data = fetch_youtube_comments_data(continuation_token, click_tracking_params)
+            data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/next?prettyPrint=false')
             
             try:
                 mutations_list = data.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
@@ -128,12 +128,13 @@ class YoutubeAPI:
         return comments_json
     
 
-    def search(self, search_term):
+    def search(self, search_term, n_videos=100):
         """
         Search YouTube videos
         
         Args:
             search_term (str): Search query
+            n_videos (int): Number of videos to retrieve
             
         Returns:
             dict: Search results

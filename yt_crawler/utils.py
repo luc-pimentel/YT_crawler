@@ -25,7 +25,7 @@ def xml_transcript_to_json_bs4(xml_string):
     return transcript_data
 
 
-def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=None):
+def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=None, payload=None):
     """
     Extract YouTube initial data from a given URL.
     
@@ -42,7 +42,7 @@ def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=Non
     """
     
     # Get the webpage content
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, json=payload)
     response.raise_for_status()
     
     # Parse with BeautifulSoup
@@ -70,7 +70,7 @@ def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=Non
     
 
 
-def fetch_youtube_comments_data(continuation_token, click_tracking_params):
+def fetch_youtube_continuation_data(continuation_token, click_tracking_params, api_url):
     """
     Fetch YouTube comments data using continuation token and click tracking params.
     
@@ -84,7 +84,7 @@ def fetch_youtube_comments_data(continuation_token, click_tracking_params):
     Raises:
         Exception: If the API request fails
     """
-    comment_url = "https://www.youtube.com/youtubei/v1/next?prettyPrint=false"
+    comment_url = f"https://www.youtube.com{api_url}"
     
     # Payload with continuation and click tracking
     payload = {
