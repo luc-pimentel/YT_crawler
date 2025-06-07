@@ -29,6 +29,12 @@ class TestYoutubeAPI:
         # Verify the dictionary is not empty
         assert len(result) > 0, "Result should not be empty"
         assert result, "Result should be truthy (not empty)"
+        
+        # Verify the dictionary contains all required keys
+        required_keys = ['videoId', 'title', 'lengthSeconds', 'keywords', 'channelId', 
+                        'shortDescription', 'thumbnail', 'viewCount', 'author']
+        
+        assert all(key in result for key in required_keys), "Result should contain all required keys"
 
 
     def test_get_video_transcript_success(self, youtube_api):
