@@ -81,7 +81,6 @@ class YoutubeAPI:
         except (AttributeError, IndexError, TypeError):
             raise Exception("Could not find comment continuation data")
 
-        data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/next?prettyPrint=false')
 
         all_comments = []
         
