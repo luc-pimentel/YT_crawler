@@ -58,3 +58,34 @@ class TestYoutubeSearch:
         assert all('videoId' in item for item in search_results), "All search result items should contain 'videoId' key"
         assert all('thumbnail' in item for item in search_results), "All search result items should contain 'thumbnail' key"
         assert all('title' in item for item in search_results), "All search result items should contain 'title' key"
+
+
+    def test_search_large_n_videos(self, youtube_api):
+        """Test that search works with a large n_videos count and returns exactly that many videos"""
+        search_term = "python is good"
+        n_videos = 167
+        
+        # Call the function with large n_videos count
+        result = youtube_api.search(search_term, n_videos=n_videos)
+        
+        # Verify the result is a dictionary
+        assert isinstance(result, dict), "Result should be a dictionary"
+        
+        # Verify the dictionary contains the 'search_results' key
+        assert result.get('search_results') is not None, "Result should contain 'search_results' key"
+        
+        # Verify the search_results value is a list
+        search_results = result.get('search_results')
+        assert isinstance(search_results, list), "Search results should be a list"
+        
+        # Verify we get exactly the requested number of videos
+        assert len(search_results) == n_videos, f"Should return exactly {n_videos} videos, got {len(search_results)}"
+        
+        # Verify all results are valid video objects (not None)
+        assert all(video is not None for video in search_results), "All search results should be valid (not None)"
+        
+        # Verify basic structure is maintained for large result sets
+        assert all(isinstance(video, dict) for video in search_results), "All search result items should be dictionaries"
+        assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
+        assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
+        assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
