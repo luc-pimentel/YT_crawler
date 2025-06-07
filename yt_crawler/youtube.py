@@ -97,7 +97,6 @@ class YoutubeAPI:
             
             # Check if we've reached the desired number of comments
             if n_comments is not None and len(all_comments) >= n_comments:
-                print(f"Reached target of {n_comments} comments. Stopping fetch.")
                 break
             
             # Extract continuation data for next batch - handle both possible response structures
@@ -113,7 +112,6 @@ class YoutubeAPI:
                 else:
                     # Neither key found, no more continuation data
                     continuation_token = None
-                    print(f"No more comments to fetch. Final total: {len(all_comments)} comments")
                     continue
                 
                 continuation_token = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('continuationCommand').get('token')
@@ -121,7 +119,6 @@ class YoutubeAPI:
             except (AttributeError, IndexError, TypeError):
                 # No more continuation data available
                 continuation_token = None
-                print(f"No more comments to fetch. Final total: {len(all_comments)} comments")
 
         # Truncate to exact number if n_comments is specified
         if n_comments is not None:
