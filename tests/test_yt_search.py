@@ -36,3 +36,25 @@ class TestYoutubeSearch:
         search_results = result.get('search_results')
         assert len(search_results) > 0, "Search results list should not be empty"
         assert search_results, "Search results list should be truthy (not empty)"
+
+
+    def test_search_result_item_structure(self, youtube_api):
+        """Test that each search result item has the required keys"""
+        search_term = "python is good"
+        
+        # Call the function - this should not raise any exceptions
+        result = youtube_api.search(search_term)
+        
+        # Get the search results list
+        search_results = result.get('search_results')
+        
+        # Ensure we have results to test
+        assert search_results, "Search results should not be empty for structure testing"
+        
+        # Test that all items are dictionaries
+        assert all(isinstance(item, dict) for item in search_results), "All search result items should be dictionaries"
+        
+        # Test that all items have the required keys
+        assert all('videoId' in item for item in search_results), "All search result items should contain 'videoId' key"
+        assert all('thumbnail' in item for item in search_results), "All search result items should contain 'thumbnail' key"
+        assert all('title' in item for item in search_results), "All search result items should contain 'title' key"
