@@ -1,10 +1,93 @@
 import requests
 from .utils import *
 from .config import HEADERS
+from .utils import extract_json_from_scripts
 
 
 class SearchMixin:
     """Mixin class providing YouTube search functionality"""
+
+    def get_search_url(self, search_term, sort_by='relevance'):
+        """
+        Get a filtered YouTube search URL with specified sorting.
+        
+        Args:
+            search_term (str): The search query (e.g., "python is good")
+            sort_by (str): Sorting option - one of 'relevance', 'upload_date', 'view_count', 'rating'
+        
+        Returns:
+            str: Complete YouTube search URL with sorting applied
+        
+        Raises:
+            ValueError: If sort_by is not a valid sorting option
+            Exception: If unable to extract filter data from YouTube
+        """
+        
+        # Define sorting options mapping
+        sorting_dict = {'relevance': 0, 'upload_date': 1, 'view_count': 2, 'rating': 3}
+        
+        # Validate sort_by parameter
+        if sort_by not in sorting_dict:
+            raise ValueError(f"Invalid sort_by option. Must be one of: {list(sorting_dict.keys())}")
+        
+        # Format search term for URL (replace spaces with +)
+        formatted_search_term = search_term.replace(' ', '+')
+        
+        # Base YouTube search URL
+        base_url = "https://www.youtube.com"
+        search_url = f"{base_url}/results?search_query={formatted_search_term}"
+        
+        # If relevance (default), return the base search URL
+        if sort_by == 'relevance':
+            return search_url
+        
+        try:
+            # Make request to get the search page
+            response = requests.get(search_url)
+            response.raise_for_status()
+            
+            # Parse HTML
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(response.text, 'html.parser')
+            scripts = soup.find_all('script')
+            
+            # Extract JSON data containing filter information
+            json_data = extract_json_from_scripts(scripts, 'searchFilterButton')
+            
+            if not json_data or 'searchFilterButton' not in json_data:
+                raise Exception("Could not find search filter data in YouTube response")
+            
+            # Navigate through the nested JSON structure to get filter groups
+            search_filter_groups = (json_data
+                                   .get('searchFilterButton')
+                                   .get('buttonRenderer')
+                                   .get('command')
+                                   .get('openPopupAction')
+                                   .get('popup')
+                                   .get('searchFilterOptionsDialogRenderer')
+                                   .get('groups'))
+            
+            # Get the sorting filters (last group in the list)
+            sorting_filters = [search_filter_group.get('searchFilterGroupRenderer').get('filters') 
+                              for search_filter_group in search_filter_groups][-1]
+            
+            # Get the filter index for the requested sorting option
+            filter_index = sorting_dict[sort_by]
+            
+            # Extract the URL path for the specified sorting option
+            filter_url_path = (sorting_filters[filter_index]
+                              .get('searchFilterRenderer')
+                              .get('navigationEndpoint')
+                              .get('commandMetadata')
+                              .get('webCommandMetadata')
+                              .get('url'))
+            
+            # Return complete URL
+            return base_url + filter_url_path
+            
+        except Exception as e:
+            raise Exception(f"Failed to get filtered search URL: {str(e)}")
+    
     
     def search(self, search_term: str, n_videos: int = 50):
         """
