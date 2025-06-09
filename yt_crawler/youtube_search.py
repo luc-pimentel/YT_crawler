@@ -4,6 +4,48 @@ from .config import HEADERS
 from .utils import extract_json_from_scripts
 
 
+SEARCH_FILTER_DICT = {
+    'upload_date': {
+        'last_hour': 0,
+        'today': 1, 
+        'this_week': 2,
+        'this_month': 3,
+        'this_year': 4
+    },
+    'type': {
+        'video': 0,
+        'channel': 1,
+        'playlist': 2,
+        'movie': 3
+    },
+    'duration': {
+        'under_4_minutes': 0,
+        '4_20_minutes': 1,
+        'over_20_minutes': 2
+    },
+    'features': {
+        'live': 0,
+        '4k': 1,
+        'hd': 2,
+        'subtitles_cc': 3,
+        'creative_commons': 4,
+        '360': 5,
+        'vr180': 6,
+        '3d': 7,
+        'hdr': 8,
+        'location': 9,
+        'purchased': 10
+    },
+    'sort_by': {
+        'relevance': 0,
+        'upload_date': 1,
+        'view_count': 2,
+        'rating': 3
+    }
+}
+
+
+
 class SearchMixin:
     """Mixin class providing YouTube search functionality"""
 
