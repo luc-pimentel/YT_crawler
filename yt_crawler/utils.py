@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import json
+import re
 from .config import HEADERS
 
 def xml_transcript_to_json_bs4(xml_string):
@@ -68,6 +69,66 @@ def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=Non
     except json.JSONDecodeError as e:
         raise Exception(f"Failed to parse {variable_name} JSON: {str(e)}")
     
+
+def find_nested_key(obj, target_key):
+    """
+    Recursively search for a key in nested dictionaries/lists
+    
+    Args:
+        obj: The object to search in (dict, list, or other)
+        target_key (str): The key to search for
+        
+    Returns:
+        dict: The dictionary containing the target key, or None if not found
+    """
+    if isinstance(obj, dict):
+        if target_key in obj:
+            return obj
+        for value in obj.values():
+            result = find_nested_key(value, target_key)
+            if result is not None:
+                return result
+    elif isinstance(obj, list):
+        for item in obj:
+            result = find_nested_key(item, target_key)
+            if result is not None:
+                return result
+    return None
+
+
+def extract_json_from_scripts(scripts, target_key):
+    """
+    Extract and parse JSON data from BeautifulSoup script elements, searching for a specific key
+    
+    Args:
+        scripts: List of BeautifulSoup script elements
+        target_key (str): The key to search for in the parsed JSON data
+        
+    Returns:
+        dict: The dictionary containing the target key, or None if not found
+    """
+    for script in scripts:
+        if script.string:  # Check if script has content
+            try:
+                # Extract potential JSON from script content
+                script_content = script.string.strip()
+                
+                # Look for JSON-like patterns
+                json_matches = re.findall(r'\{.*\}', script_content, re.DOTALL)
+                
+                for json_str in json_matches:
+                    try:
+                        data = json.loads(json_str)
+                        result = find_nested_key(data, target_key)
+                        if result:
+                            return result
+                    except json.JSONDecodeError:
+                        continue
+                        
+            except Exception as e:
+                continue
+    
+    return None
 
 
 def fetch_youtube_continuation_data(continuation_token, click_tracking_params, api_url):

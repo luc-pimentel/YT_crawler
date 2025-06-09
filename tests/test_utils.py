@@ -105,3 +105,58 @@ class TestXmlTranscriptToJsonBs4:
             assert isinstance(entry["start"], float), "Start should be a float"
             assert isinstance(entry["duration"], float), "Duration should be a float"
             assert isinstance(entry["text"], str), "Text should be a string"
+
+
+class TestExtractJsonFromScripts:
+    """Test suite for extract_json_from_scripts function"""
+    
+    def test_extract_json_from_scripts_happy_path(self):
+        """Test extracting JSON from scripts and finding target key - happy path"""
+        from bs4 import BeautifulSoup
+        from yt_crawler.utils import extract_json_from_scripts
+        
+        # Use a real YouTube search results page to get actual scripts
+        url = "https://www.youtube.com/results?search_query=python+is+good"
+        
+        # Fetch the page content
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        
+        # Parse with BeautifulSoup to get scripts
+        soup = BeautifulSoup(response.text, 'html.parser')
+        scripts = soup.find_all('script')
+        
+        # Test searching for searchFilterButton (known to exist in search results)
+        result = extract_json_from_scripts(scripts, 'searchFilterButton')
+        
+        # Verify the result
+        assert result is not None, "Should find searchFilterButton in YouTube search page"
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert 'searchFilterButton' in result, "Result should contain the target key"
+        
+        # Verify the structure of searchFilterButton
+        search_filter_button = result['searchFilterButton']
+        assert isinstance(search_filter_button, dict), "searchFilterButton should be a dictionary"
+        assert 'buttonRenderer' in search_filter_button, "searchFilterButton should have buttonRenderer"
+    
+    def test_extract_json_from_scripts_key_not_found(self):
+        """Test extracting JSON from scripts when target key doesn't exist"""
+        from bs4 import BeautifulSoup
+        from yt_crawler.utils import extract_json_from_scripts
+        
+        # Use a real YouTube search results page
+        url = "https://www.youtube.com/results?search_query=python+is+good"
+        
+        # Fetch the page content
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        
+        # Parse with BeautifulSoup to get scripts
+        soup = BeautifulSoup(response.text, 'html.parser')
+        scripts = soup.find_all('script')
+        
+        # Test searching for a key that doesn't exist
+        result = extract_json_from_scripts(scripts, 'nonExistentKey12345')
+        
+        # Verify the result
+        assert result is None, "Should return None when target key is not found"
