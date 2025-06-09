@@ -7,7 +7,7 @@ from .utils import extract_json_from_scripts
 class SearchMixin:
     """Mixin class providing YouTube search functionality"""
 
-    def get_search_url(self, search_term, sort_by='relevance'):
+    def _get_search_url(self, search_term, sort_by='relevance'):
         """
         Get a filtered YouTube search URL with specified sorting.
         
@@ -88,22 +88,24 @@ class SearchMixin:
         except Exception as e:
             raise Exception(f"Failed to get filtered search URL: {str(e)}")
     
-    
-    def search(self, search_term: str, n_videos: int = 50):
+
+    def search(self, search_term: str, n_videos: int = 50, sort_by: str = 'relevance'):
         """
         Search YouTube videos
         
         Args:
             search_term (str): Search query
             n_videos (int): Number of videos to retrieve
+            sort_by (str): Sorting option - one of 'relevance', 'upload_date', 'view_count', 'rating'
             
         Returns:
             dict: Search results
         """
-        # URL encode the search term to handle spaces and special characters
-        quoted_search_term = requests.utils.quote(search_term)
-        url = f"https://www.youtube.com/results?search_query={quoted_search_term}"
         
+        # Use the existing _get_search_url method to construct the URL with sorting
+        print('Getting search URL...')
+        url = self._get_search_url(search_term, sort_by)
+        print('Search URL:', url)
         raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
         
         try:

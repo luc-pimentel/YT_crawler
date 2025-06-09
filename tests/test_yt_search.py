@@ -89,3 +89,62 @@ class TestYoutubeSearch:
         assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
         assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
+
+
+
+    def test_search_with_sorting(self, youtube_api):
+        """Test that search works with sorting parameter (upload_date)"""
+        search_term = "python is good"
+        sort_by = "upload_date"
+        n_videos = 10
+        
+        # Call the function with sorting parameter
+        result = youtube_api.search(search_term, n_videos=n_videos, sort_by=sort_by)
+        
+        # Verify the result structure is maintained
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result.get('search_results') is not None, "Result should contain 'search_results' key"
+        
+        # Verify the search_results value is a list
+        search_results = result.get('search_results')
+        assert isinstance(search_results, list), "Search results should be a list"
+        
+        # Verify we get the requested number of videos
+        assert len(search_results) == n_videos, f"Should return exactly {n_videos} videos, got {len(search_results)}"
+        
+        # Verify all results are valid video objects with required structure
+        assert all(isinstance(video, dict) for video in search_results), "All search result items should be dictionaries"
+        assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
+        assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
+        assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
+
+
+
+    def test_search_with_sorting_large_n_videos(self, youtube_api):
+        """Test that search works with sorting parameter and large n_videos count"""
+        search_term = "python is good"
+        sort_by = "upload_date"
+        n_videos = 127
+        
+        # Call the function with sorting parameter and large n_videos count
+        result = youtube_api.search(search_term, n_videos=n_videos, sort_by=sort_by)
+        
+        # Verify the result structure is maintained
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result.get('search_results') is not None, "Result should contain 'search_results' key"
+        
+        # Verify the search_results value is a list
+        search_results = result.get('search_results')
+        assert isinstance(search_results, list), "Search results should be a list"
+        
+        # Verify we get exactly the requested number of videos
+        assert len(search_results) == n_videos, f"Should return exactly {n_videos} videos, got {len(search_results)}"
+        
+        # Verify all results are valid video objects (not None)
+        assert all(video is not None for video in search_results), "All search results should be valid (not None)"
+        
+        # Verify basic structure is maintained for large result sets with sorting
+        assert all(isinstance(video, dict) for video in search_results), "All search result items should be dictionaries"
+        assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
+        assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
+        assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
