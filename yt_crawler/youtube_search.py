@@ -6,41 +6,56 @@ from .utils import extract_json_from_scripts
 
 SEARCH_FILTER_DICT = {
     'upload_date': {
-        'last_hour': 0,
-        'today': 1, 
-        'this_week': 2,
-        'this_month': 3,
-        'this_year': 4
+        'index': 0,
+        'options': {
+            'last_hour': 0,
+            'today': 1, 
+            'this_week': 2,
+            'this_month': 3,
+            'this_year': 4
+        }
     },
     'type': {
-        'video': 0,
-        'channel': 1,
-        'playlist': 2,
-        'movie': 3
+        'index': 1,
+        'options': {
+            'video': 0,
+            'channel': 1,
+            'playlist': 2,
+            'movie': 3
+        }
     },
     'duration': {
-        'under_4_minutes': 0,
-        '4_20_minutes': 1,
-        'over_20_minutes': 2
+        'index': 2,
+        'options': {
+            'under_4_minutes': 0,
+            '4_20_minutes': 1,
+            'over_20_minutes': 2
+        }
     },
     'features': {
-        'live': 0,
-        '4k': 1,
-        'hd': 2,
-        'subtitles_cc': 3,
-        'creative_commons': 4,
-        '360': 5,
-        'vr180': 6,
-        '3d': 7,
-        'hdr': 8,
-        'location': 9,
-        'purchased': 10
+        'index': 3,
+        'options': {
+            'live': 0,
+            '4k': 1,
+            'hd': 2,
+            'subtitles_cc': 3,
+            'creative_commons': 4,
+            '360': 5,
+            'vr180': 6,
+            '3d': 7,
+            'hdr': 8,
+            'location': 9,
+            'purchased': 10
+        }
     },
     'sort_by': {
-        'relevance': 0,
-        'upload_date': 1,
-        'view_count': 2,
-        'rating': 3
+        'index': 4,
+        'options': {
+            'relevance': 0,
+            'upload_date': 1,
+            'view_count': 2,
+            'rating': 3
+        }
     }
 }
 
@@ -49,28 +64,25 @@ SEARCH_FILTER_DICT = {
 class SearchMixin:
     """Mixin class providing YouTube search functionality"""
 
-    def _get_search_url(self, search_term, sort_by='relevance'):
+    def _get_search_url(self, search_term, upload_date=None, type=None, duration=None, features=None, sort_by='relevance'):
         """
-        Get a filtered YouTube search URL with specified sorting.
+        Get a filtered YouTube search URL with specified filters.
         
         Args:
             search_term (str): The search query (e.g., "python is good")
+            upload_date (str): Upload date filter - one of 'last_hour', 'today', 'this_week', 'this_month', 'this_year'
+            type (str): Content type filter - one of 'video', 'channel', 'playlist', 'movie'
+            duration (str): Duration filter - one of 'under_4_minutes', '4_20_minutes', 'over_20_minutes'
+            features (str): Features filter - one of 'live', '4k', 'hd', 'subtitles_cc', 'creative_commons', '360', 'vr180', '3d', 'hdr', 'location', 'purchased'
             sort_by (str): Sorting option - one of 'relevance', 'upload_date', 'view_count', 'rating'
         
         Returns:
-            str: Complete YouTube search URL with sorting applied
+            str: Complete YouTube search URL with filters applied
         
         Raises:
-            ValueError: If sort_by is not a valid sorting option
+            ValueError: If any filter option is not valid
             Exception: If unable to extract filter data from YouTube
         """
-        
-        # Define sorting options mapping
-        sorting_dict = {'relevance': 0, 'upload_date': 1, 'view_count': 2, 'rating': 3}
-        
-        # Validate sort_by parameter
-        if sort_by not in sorting_dict:
-            raise ValueError(f"Invalid sort_by option. Must be one of: {list(sorting_dict.keys())}")
         
         # Format search term for URL (replace spaces with +)
         formatted_search_term = search_term.replace(' ', '+')
@@ -79,8 +91,33 @@ class SearchMixin:
         base_url = "https://www.youtube.com"
         search_url = f"{base_url}/results?search_query={formatted_search_term}"
         
-        # If relevance (default), return the base search URL
-        if sort_by == 'relevance':
+        # Collect active filters
+        active_filters = {}
+        filter_params = {
+            'upload_date': upload_date,
+            'type': type,
+            'duration': duration,
+            'features': features,
+            'sort_by': sort_by
+        }
+        
+        # Validate and collect non-None filters (except sort_by='relevance' which is default)
+        for filter_name, filter_value in filter_params.items():
+            if filter_value is not None:
+                if filter_name == 'sort_by' and filter_value == 'relevance':
+                    continue  # Skip default sort_by
+                
+                if filter_name not in SEARCH_FILTER_DICT:
+                    raise ValueError(f"Unknown filter type: {filter_name}")
+                
+                filter_options = SEARCH_FILTER_DICT[filter_name]['options']
+                if filter_value not in filter_options:
+                    raise ValueError(f"Invalid {filter_name} option '{filter_value}'. Must be one of: {list(filter_options.keys())}")
+                
+                active_filters[filter_name] = filter_value
+        
+        # If no filters are active, return base search URL
+        if not active_filters:
             return search_url
         
         try:
@@ -109,15 +146,21 @@ class SearchMixin:
                                    .get('searchFilterOptionsDialogRenderer')
                                    .get('groups'))
             
-            # Get the sorting filters (last group in the list)
-            sorting_filters = [search_filter_group.get('searchFilterGroupRenderer').get('filters') 
-                              for search_filter_group in search_filter_groups][-1]
+            # Apply the first active filter to get the filtered URL
+            # (For now, we'll apply one filter at a time - multiple filter combination comes later)
+            first_filter_name = list(active_filters.keys())[0]
+            first_filter_value = active_filters[first_filter_name]
             
-            # Get the filter index for the requested sorting option
-            filter_index = sorting_dict[sort_by]
+            # Get the filter group index and option index
+            filter_group_index = SEARCH_FILTER_DICT[first_filter_name]['index']
+            option_index = SEARCH_FILTER_DICT[first_filter_name]['options'][first_filter_value]
             
-            # Extract the URL path for the specified sorting option
-            filter_url_path = (sorting_filters[filter_index]
+            # Get the specific filter group
+            filter_group = search_filter_groups[filter_group_index]
+            filters = filter_group.get('searchFilterGroupRenderer').get('filters')
+            
+            # Extract the URL path for the specified filter option
+            filter_url_path = (filters[option_index]
                               .get('searchFilterRenderer')
                               .get('navigationEndpoint')
                               .get('commandMetadata')
@@ -131,22 +174,26 @@ class SearchMixin:
             raise Exception(f"Failed to get filtered search URL: {str(e)}")
     
 
-    def search(self, search_term: str, n_videos: int = 50, sort_by: str = 'relevance'):
+    def search(self, search_term: str, n_videos: int = 50, upload_date=None, type=None, duration=None, features=None, sort_by: str = 'relevance'):
         """
         Search YouTube videos
         
         Args:
             search_term (str): Search query
             n_videos (int): Number of videos to retrieve
+            upload_date (str): Upload date filter - one of 'last_hour', 'today', 'this_week', 'this_month', 'this_year'
+            type (str): Content type filter - one of 'video', 'channel', 'playlist', 'movie'
+            duration (str): Duration filter - one of 'under_4_minutes', '4_20_minutes', 'over_20_minutes'
+            features (str): Features filter - one of 'live', '4k', 'hd', 'subtitles_cc', 'creative_commons', '360', 'vr180', '3d', 'hdr', 'location', 'purchased'
             sort_by (str): Sorting option - one of 'relevance', 'upload_date', 'view_count', 'rating'
             
         Returns:
             dict: Search results
         """
         
-        # Use the existing _get_search_url method to construct the URL with sorting
+        # Use the updated _get_search_url method to construct the URL with all filters
         print('Getting search URL...')
-        url = self._get_search_url(search_term, sort_by)
+        url = self._get_search_url(search_term, upload_date, type, duration, features, sort_by)
         print('Search URL:', url)
         raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
         

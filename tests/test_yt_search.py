@@ -148,3 +148,114 @@ class TestYoutubeSearch:
         assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
         assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
+
+
+
+
+    def test_search_with_upload_date_filter(self, youtube_api):
+        """Test that search works with upload_date filter (last_hour)"""
+        search_term = "python is good"
+        upload_date = "last_hour"
+        n_videos = 10
+        
+        # Call the function with upload_date filter
+        result = youtube_api.search(search_term, n_videos=n_videos, upload_date=upload_date)
+        
+        # Verify the result structure is maintained
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result.get('search_results') is not None, "Result should contain 'search_results' key"
+        
+        # Verify the search_results value is a list
+        search_results = result.get('search_results')
+        assert isinstance(search_results, list), "Search results should be a list"
+        
+        # Verify we get the requested number of videos (or less if not enough recent videos)
+        assert len(search_results) <= n_videos, f"Should return at most {n_videos} videos, got {len(search_results)}"
+        
+        # Verify all results are valid video objects with required structure
+        if search_results:  # Only check structure if we have results
+            assert all(isinstance(video, dict) for video in search_results), "All search result items should be dictionaries"
+            assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
+            assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
+            assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
+
+
+    def test_search_with_type_filter(self, youtube_api):
+        """Test that search works with type filter (video)"""
+        search_term = "python is good"
+        type_filter = "video"
+        n_videos = 10
+        
+        # Call the function with type filter
+        result = youtube_api.search(search_term, n_videos=n_videos, type=type_filter)
+        
+        # Verify the result structure is maintained
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result.get('search_results') is not None, "Result should contain 'search_results' key"
+        
+        # Verify the search_results value is a list
+        search_results = result.get('search_results')
+        assert isinstance(search_results, list), "Search results should be a list"
+        
+        # Verify we get the requested number of videos
+        assert len(search_results) == n_videos, f"Should return exactly {n_videos} videos, got {len(search_results)}"
+        
+        # Verify all results are valid video objects with required structure
+        assert all(isinstance(video, dict) for video in search_results), "All search result items should be dictionaries"
+        assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
+        assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
+        assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
+
+
+    def test_search_with_duration_filter(self, youtube_api):
+        """Test that search works with duration filter (under_4_minutes)"""
+        search_term = "python is good"
+        duration = "under_4_minutes"
+        n_videos = 10
+        
+        # Call the function with duration filter
+        result = youtube_api.search(search_term, n_videos=n_videos, duration=duration)
+        
+        # Verify the result structure is maintained
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result.get('search_results') is not None, "Result should contain 'search_results' key"
+        
+        # Verify the search_results value is a list
+        search_results = result.get('search_results')
+        assert isinstance(search_results, list), "Search results should be a list"
+        
+        # Verify we get the requested number of videos
+        assert len(search_results) == n_videos, f"Should return exactly {n_videos} videos, got {len(search_results)}"
+        
+        # Verify all results are valid video objects with required structure
+        assert all(isinstance(video, dict) for video in search_results), "All search result items should be dictionaries"
+        assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
+        assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
+        assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
+
+
+    def test_search_with_features_filter(self, youtube_api):
+        """Test that search works with features filter (hd)"""
+        search_term = "python is good"
+        features = "hd"
+        n_videos = 10
+        
+        # Call the function with features filter
+        result = youtube_api.search(search_term, n_videos=n_videos, features=features)
+        
+        # Verify the result structure is maintained
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result.get('search_results') is not None, "Result should contain 'search_results' key"
+        
+        # Verify the search_results value is a list
+        search_results = result.get('search_results')
+        assert isinstance(search_results, list), "Search results should be a list"
+        
+        # Verify we get the requested number of videos
+        assert len(search_results) == n_videos, f"Should return exactly {n_videos} videos, got {len(search_results)}"
+        
+        # Verify all results are valid video objects with required structure
+        assert all(isinstance(video, dict) for video in search_results), "All search result items should be dictionaries"
+        assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
+        assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
+        assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
