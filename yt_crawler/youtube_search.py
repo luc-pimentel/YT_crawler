@@ -64,6 +64,7 @@ SEARCH_FILTER_DICT = {
 class SearchMixin:
     """Mixin class providing YouTube search functionality"""
 
+
     def _get_search_url(self, search_term, upload_date=None, type=None, duration=None, features=None, sort_by='relevance'):
         """
         Get a filtered YouTube search URL with specified filters.
@@ -89,7 +90,7 @@ class SearchMixin:
         
         # Base YouTube search URL
         base_url = "https://www.youtube.com"
-        search_url = f"{base_url}/results?search_query={formatted_search_term}"
+        current_url = f"{base_url}/results?search_query={formatted_search_term}"
         
         # Collect active filters
         active_filters = {}
@@ -118,60 +119,60 @@ class SearchMixin:
         
         # If no filters are active, return base search URL
         if not active_filters:
-            return search_url
+            return current_url
         
-        try:
-            # Make request to get the search page
-            response = requests.get(search_url)
-            response.raise_for_status()
-            
-            # Parse HTML
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(response.text, 'html.parser')
-            scripts = soup.find_all('script')
-            
-            # Extract JSON data containing filter information
-            json_data = extract_json_from_scripts(scripts, 'searchFilterButton')
-            
-            if not json_data or 'searchFilterButton' not in json_data:
-                raise Exception("Could not find search filter data in YouTube response")
-            
-            # Navigate through the nested JSON structure to get filter groups
-            search_filter_groups = (json_data
-                                   .get('searchFilterButton')
-                                   .get('buttonRenderer')
-                                   .get('command')
-                                   .get('openPopupAction')
-                                   .get('popup')
-                                   .get('searchFilterOptionsDialogRenderer')
-                                   .get('groups'))
-            
-            # Apply the first active filter to get the filtered URL
-            # (For now, we'll apply one filter at a time - multiple filter combination comes later)
-            first_filter_name = list(active_filters.keys())[0]
-            first_filter_value = active_filters[first_filter_name]
-            
-            # Get the filter group index and option index
-            filter_group_index = SEARCH_FILTER_DICT[first_filter_name]['index']
-            option_index = SEARCH_FILTER_DICT[first_filter_name]['options'][first_filter_value]
-            
-            # Get the specific filter group
-            filter_group = search_filter_groups[filter_group_index]
-            filters = filter_group.get('searchFilterGroupRenderer').get('filters')
-            
-            # Extract the URL path for the specified filter option
-            filter_url_path = (filters[option_index]
-                              .get('searchFilterRenderer')
-                              .get('navigationEndpoint')
-                              .get('commandMetadata')
-                              .get('webCommandMetadata')
-                              .get('url'))
-            
-            # Return complete URL
-            return base_url + filter_url_path
-            
-        except Exception as e:
-            raise Exception(f"Failed to get filtered search URL: {str(e)}")
+        # Apply filters sequentially
+        for filter_name, filter_value in active_filters.items():
+            try:
+                
+                # Make request to get the current page
+                response = requests.get(current_url)
+                response.raise_for_status()
+                
+                # Parse HTML
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(response.text, 'html.parser')
+                scripts = soup.find_all('script')
+                
+                # Extract JSON data containing filter information
+                json_data = extract_json_from_scripts(scripts, 'searchFilterButton')
+                
+                if not json_data or 'searchFilterButton' not in json_data:
+                    raise Exception(f"Could not find search filter data when applying {filter_name} filter")
+                
+                # Navigate through the nested JSON structure to get filter groups
+                search_filter_groups = (json_data
+                                    .get('searchFilterButton')
+                                    .get('buttonRenderer')
+                                    .get('command')
+                                    .get('openPopupAction')
+                                    .get('popup')
+                                    .get('searchFilterOptionsDialogRenderer')
+                                    .get('groups'))
+                
+                # Get the filter group index and option index
+                filter_group_index = SEARCH_FILTER_DICT[filter_name]['index']
+                option_index = SEARCH_FILTER_DICT[filter_name]['options'][filter_value]
+                
+                # Get the specific filter group
+                filter_group = search_filter_groups[filter_group_index]
+                filters = filter_group.get('searchFilterGroupRenderer').get('filters')
+                
+                # Extract the URL path for the specified filter option
+                filter_url_path = (filters[option_index]
+                                .get('searchFilterRenderer')
+                                .get('navigationEndpoint')
+                                .get('commandMetadata')
+                                .get('webCommandMetadata')
+                                .get('url'))
+                
+                # Update current URL for next iteration
+                current_url = base_url + filter_url_path
+                
+            except Exception as e:
+                raise Exception(f"Failed to apply {filter_name} filter with value '{filter_value}': {str(e)}")
+        
+        return current_url
     
 
     def search(self, search_term: str, n_videos: int = 50, upload_date=None, type=None, duration=None, features=None, sort_by: str = 'relevance'):
@@ -192,9 +193,7 @@ class SearchMixin:
         """
         
         # Use the updated _get_search_url method to construct the URL with all filters
-        print('Getting search URL...')
         url = self._get_search_url(search_term, upload_date, type, duration, features, sort_by)
-        print('Search URL:', url)
         raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
         
         try:
