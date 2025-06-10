@@ -37,7 +37,6 @@ class TestYoutubeSearch:
         assert len(search_results) > 0, "Search results list should not be empty"
         assert search_results, "Search results list should be truthy (not empty)"
 
-
     def test_search_result_item_structure(self, youtube_api):
         """Test that each search result item has the required keys"""
         search_term = "python is good"
@@ -91,7 +90,6 @@ class TestYoutubeSearch:
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-
     def test_search_with_sorting(self, youtube_api):
         """Test that search works with sorting parameter (upload_date)"""
         search_term = "python is good"
@@ -117,7 +115,6 @@ class TestYoutubeSearch:
         assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
         assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
-
 
 
     def test_search_with_sorting_large_n_videos(self, youtube_api):
@@ -150,8 +147,6 @@ class TestYoutubeSearch:
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-
-
     def test_search_with_upload_date_filter(self, youtube_api):
         """Test that search works with upload_date filter (last_hour)"""
         search_term = "python is good"
@@ -178,33 +173,6 @@ class TestYoutubeSearch:
             assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
             assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
             assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
-
-
-    def test_search_with_type_filter(self, youtube_api):
-        """Test that search works with type filter (video)"""
-        search_term = "python is good"
-        type_filter = "video"
-        n_videos = 10
-        
-        # Call the function with type filter
-        result = youtube_api.search(search_term, n_videos=n_videos, type=type_filter)
-        
-        # Verify the result structure is maintained
-        assert isinstance(result, dict), "Result should be a dictionary"
-        assert result.get('search_results') is not None, "Result should contain 'search_results' key"
-        
-        # Verify the search_results value is a list
-        search_results = result.get('search_results')
-        assert isinstance(search_results, list), "Search results should be a list"
-        
-        # Verify we get the requested number of videos
-        assert len(search_results) == n_videos, f"Should return exactly {n_videos} videos, got {len(search_results)}"
-        
-        # Verify all results are valid video objects with required structure
-        assert all(isinstance(video, dict) for video in search_results), "All search result items should be dictionaries"
-        assert all('videoId' in video for video in search_results), "All search result items should contain 'videoId' key"
-        assert all('thumbnail' in video for video in search_results), "All search result items should contain 'thumbnail' key"
-        assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
     def test_search_with_duration_filter(self, youtube_api):
@@ -261,10 +229,9 @@ class TestYoutubeSearch:
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-    def test_search_with_four_filters_combination(self, youtube_api):
-        """Test that search works with four filters combined (type + duration + features + upload_date)"""
+    def test_search_with_three_filters_combination(self, youtube_api):
+        """Test that search works with four filters combined (duration + features + upload_date)"""
         search_term = "python tutorial"
-        type_filter = "video"
         duration = "4_20_minutes"
         features = "hd"
         upload_date = "this_week"
@@ -274,7 +241,6 @@ class TestYoutubeSearch:
         result = youtube_api.search(
             search_term, 
             n_videos=n_videos, 
-            type=type_filter,
             duration=duration,
             features=features,
             upload_date=upload_date

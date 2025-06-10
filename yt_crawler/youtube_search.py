@@ -65,7 +65,7 @@ class SearchMixin:
     """Mixin class providing YouTube search functionality"""
 
 
-    def _get_search_url(self, search_term, upload_date=None, type=None, duration=None, features=None, sort_by='relevance'):
+    def _get_search_url(self, search_term, upload_date=None, duration=None, features=None, sort_by='relevance'):
         """
         Get a filtered YouTube search URL with specified filters.
         
@@ -84,6 +84,7 @@ class SearchMixin:
             ValueError: If any filter option is not valid
             Exception: If unable to extract filter data from YouTube
         """
+        type=None # Type filter is not supported yet
         
         # Format search term for URL (replace spaces with +)
         formatted_search_term = search_term.replace(' ', '+')
@@ -175,7 +176,7 @@ class SearchMixin:
         return current_url
     
 
-    def search(self, search_term: str, n_videos: int = 50, upload_date=None, type=None, duration=None, features=None, sort_by: str = 'relevance'):
+    def search(self, search_term: str, n_videos: int = 50, upload_date=None, duration=None, features=None, sort_by: str = 'relevance'):
         """
         Search YouTube videos
         
@@ -183,7 +184,6 @@ class SearchMixin:
             search_term (str): Search query
             n_videos (int): Number of videos to retrieve
             upload_date (str): Upload date filter - one of 'last_hour', 'today', 'this_week', 'this_month', 'this_year'
-            type (str): Content type filter - one of 'video', 'channel', 'playlist', 'movie'
             duration (str): Duration filter - one of 'under_4_minutes', '4_20_minutes', 'over_20_minutes'
             features (str): Features filter - one of 'live', '4k', 'hd', 'subtitles_cc', 'creative_commons', '360', 'vr180', '3d', 'hdr', 'location', 'purchased'
             sort_by (str): Sorting option - one of 'relevance', 'upload_date', 'view_count', 'rating'
@@ -193,7 +193,7 @@ class SearchMixin:
         """
         
         # Use the updated _get_search_url method to construct the URL with all filters
-        url = self._get_search_url(search_term, upload_date, type, duration, features, sort_by)
+        url = self._get_search_url(search_term, upload_date, duration, features, sort_by)
         raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
         
         try:
