@@ -4,25 +4,31 @@ from .utils import *
 class CommentsMixin:
     """Mixin class for YouTube comments functionality"""
     
-    def get_video_comments(self, video_id, n_comments=None):
+    def get_video_comments(self, video_id, n_comments=None, sort_by='top_comments'):
         """
         Get video comments from YouTube video ID
             
         Args:
             video_id (str): YouTube video ID
             n_comments (int, optional): Maximum number of comments to fetch. If None, fetches all comments.
+            sorting (str): Comment sorting type. Either 'top_comments' or 'newest'. Defaults to 'top_comments'.
                 
         Returns:
             dict: Video comments data
         """
+        # Validate sorting parameter
+        comments_dict = {'top_comments': 0, 'newest': 1}
+        if sort_by not in comments_dict:
+            raise ValueError(f"Invalid sorting option. Must be one of: {list(comments_dict.keys())}")
+        
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
         initial_data_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialData')
 
         try:
-            comment_section_renderer_json = initial_data_response_json.get('engagementPanels')[0].get('engagementPanelSectionListRenderer').get('content').get('sectionListRenderer').get('contents')[0]
-            continuation_endpoint = comment_section_renderer_json.get('itemSectionRenderer').get('contents')[0].get('continuationItemRenderer').get('continuationEndpoint')
-            click_tracking_params = continuation_endpoint.get('clickTrackingParams')
-            continuation_token = continuation_endpoint.get('continuationCommand').get('token')
+            comments_section_header = initial_data_response_json.get('engagementPanels')[0].get('engagementPanelSectionListRenderer').get('header')
+            selected_comment_type = comments_section_header.get('engagementPanelTitleHeaderRenderer').get('menu').get('sortFilterSubMenuRenderer').get('subMenuItems')[comments_dict[sort_by]]
+            click_tracking_params = selected_comment_type.get('serviceEndpoint').get('clickTrackingParams')
+            continuation_token = selected_comment_type.get('serviceEndpoint').get('continuationCommand').get('token')
         except (AttributeError, IndexError, TypeError):
             raise Exception("Could not find comment continuation data")
 
