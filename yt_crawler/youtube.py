@@ -2,12 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from .utils import *
-from .config import HEADERS
 from .youtube_search import SearchMixin
 from .youtube_comments import CommentsMixin
+from .youtube_transcript import TranscriptMixin
 
 
-class YoutubeAPI(SearchMixin, CommentsMixin):
+class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin):
 
     def get_video_details(self, video_id):
         """
@@ -31,34 +31,6 @@ class YoutubeAPI(SearchMixin, CommentsMixin):
             raise Exception("No video details found")
         
         return video_details
-    
-
-    def get_video_transcript(self, video_id):
-        """
-            Get video transcript from YouTube video ID
-            
-            Args:
-                video_id (str): YouTube video ID
-                
-            Returns:
-                dict: Video transcript
-        """
-            # Construct YouTube URL
-        youtube_url = f"https://www.youtube.com/watch?v={video_id}"
-            
-            # Get the webpage content
-        initial_player_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialPlayerResponse')
-
-        captions_element = initial_player_response_json.get('captions')
-
-        if not captions_element:
-            raise Exception("Video has no transcript available")
-
-        caption_url = captions_element.get('playerCaptionsTracklistRenderer').get('captionTracks')[0].get('baseUrl')
-        caption_request = requests.get(caption_url)
-        video_transcript = xml_transcript_to_json_bs4(caption_request.text)
-
-        return video_transcript
     
 
     def get_trending_videos(self):
