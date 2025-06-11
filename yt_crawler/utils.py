@@ -51,7 +51,6 @@ def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=Non
     
     # Find all script tags
     scripts = soup.find_all('script')
-    
     # Find the script text containing the target variable
     script_text = next(
         (script.text.split(f'var {variable_name} = ')[1][:-1]

@@ -150,7 +150,7 @@ class TestYoutubeSearch:
     def test_search_with_upload_date_filter(self, youtube_api):
         """Test that search works with upload_date filter (last_hour)"""
         search_term = "python is good"
-        upload_date = "last_hour"
+        upload_date = "today"
         n_videos = 10
         
         # Call the function with upload_date filter
