@@ -18,7 +18,7 @@ class TestYoutubeAPIComments:
 
     def test_get_video_comments_success(self, youtube_api):
         """Test that get_video_comments works with a valid video ID and returns populated data"""
-        video_id = "nUgGY18iTJw"
+        video_id = "lH3ox-mE1xY"
         
         # Call the function - this should not raise any exceptions
         result = youtube_api.get_video_comments(video_id)
