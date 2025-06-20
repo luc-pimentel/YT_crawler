@@ -176,7 +176,7 @@ class SearchMixin:
         return current_url
     
 
-    def search(self, search_term: str, n_videos: int = 50, upload_date=None, duration=None, features=None, sort_by: str = 'relevance'):
+    def search(self, search_term: str, n_videos: int = 100, upload_date=None, duration=None, features=None, sort_by: str = 'relevance'):
         """
         Search YouTube videos
         
