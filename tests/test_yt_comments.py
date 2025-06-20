@@ -293,3 +293,53 @@ class TestYoutubeAPIComments:
             # Verify the filtered thread matches our requested ID
             returned_ids = [thread.get('root_comment_id') for thread in filtered_threads]
             assert test_comment_id in returned_ids, "Filtered result should contain the requested comment ID"
+
+
+
+    def test_get_video_comment_threads_with_specific_comment_id(self, youtube_api):
+        """Test get_video_comment_threads with a specific comment ID"""
+        video_id = "AqBOdq_mkPE"
+        comment_ids = ['UgyVY9GfRbe2hKgXmDJ4AaABAg']
+        expected_thread_keys = ['root_comment_id', 'sub_comments']
+        expected_subcomment_keys = ['properties', 'author', 'key']
+        
+        # Call function with specific comment ID
+        result = youtube_api.get_video_comment_threads(video_id, comment_ids=comment_ids)
+        
+        # Verify return structure
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result.get('comment_threads') is not None, "Result should contain 'comment_threads' key"
+        
+        comment_threads = result.get('comment_threads')
+        assert isinstance(comment_threads, list), "Comment threads should be a list"
+        assert len(comment_threads) > 0, "Should return at least one comment thread for the specified ID"
+        
+        # Verify that returned threads match the requested comment ID
+        returned_comment_ids = [thread.get('root_comment_id') for thread in comment_threads]
+        assert comment_ids[0] in returned_comment_ids, f"Should return thread for comment ID {comment_ids[0]}"
+        
+        # Verify structure of returned threads
+        for thread in comment_threads:
+            assert isinstance(thread, dict), "Each comment thread should be a dictionary"
+            
+            # Verify thread has required keys
+            assert all(key in thread for key in expected_thread_keys), \
+                f"Each thread should contain the keys: {expected_thread_keys}"
+            
+            # Verify root_comment_id matches our filter
+            root_id = thread.get('root_comment_id')
+            assert root_id == comment_ids[0], f"root_comment_id should be {comment_ids[0]}, got {root_id}"
+            
+            # Verify sub_comments structure
+            sub_comments = thread.get('sub_comments')
+            assert isinstance(sub_comments, list), "sub_comments should be a list"
+            assert len(sub_comments) > 0, "sub_comments list should not be empty"
+            
+            # Verify each sub-comment structure
+            for sub_comment in sub_comments:
+                assert isinstance(sub_comment, dict), "Each sub-comment should be a dictionary"
+                assert all(key in sub_comment for key in expected_subcomment_keys), \
+                    f"Each sub-comment should contain the keys: {expected_subcomment_keys}"
+                assert sub_comment.get('properties') is not None, "sub-comment properties should not be None"
+                assert sub_comment.get('author') is not None, "sub-comment author should not be None"
+                assert sub_comment.get('key') is not None, "sub-comment key should not be None"
