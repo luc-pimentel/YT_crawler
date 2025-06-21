@@ -1,6 +1,7 @@
 import pytest
 import sys
 import os
+import random
 
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -343,3 +344,93 @@ class TestYoutubeAPIComments:
                 assert sub_comment.get('properties') is not None, "sub-comment properties should not be None"
                 assert sub_comment.get('author') is not None, "sub-comment author should not be None"
                 assert sub_comment.get('key') is not None, "sub-comment key should not be None"
+
+
+    def test_get_video_comment_threads_comprehensive_with_random_filtering(self, youtube_api):
+        """Comprehensive test for get_video_comment_threads with random comment ID filtering"""
+        video_id = "AqBOdq_mkPE"
+        expected_thread_keys = ['root_comment_id', 'sub_comments']
+        expected_subcomment_keys = ['properties', 'author', 'key']
+        
+        # Test basic functionality - get all comment threads
+        result = youtube_api.get_video_comment_threads(video_id)
+        
+        # Verify return structure
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result.get('comment_threads') is not None, "Result should contain 'comment_threads' key"
+        
+        comment_threads = result.get('comment_threads')
+        assert isinstance(comment_threads, list), "Comment threads should be a list"
+        assert len(comment_threads) > 0, "Comment threads list should not be empty"
+        
+        # Verify each comment thread structure and sub-comments
+        for thread in comment_threads:
+            assert isinstance(thread, dict), "Each comment thread should be a dictionary"
+            
+            # Verify thread has required keys
+            assert all(key in thread for key in expected_thread_keys), \
+                f"Each thread should contain the keys: {expected_thread_keys}"
+            
+            # Verify root_comment_id
+            assert thread.get('root_comment_id') is not None, "root_comment_id should not be None"
+            assert isinstance(thread.get('root_comment_id'), str), "root_comment_id should be a string"
+            assert thread.get('root_comment_id'), "root_comment_id should not be empty"
+            
+            # Verify sub_comments structure
+            sub_comments = thread.get('sub_comments')
+            assert isinstance(sub_comments, list), "sub_comments should be a list"
+            assert len(sub_comments) > 0, "sub_comments list should not be empty"
+            
+            # Verify each sub-comment has required keys and structure
+            for sub_comment in sub_comments:
+                assert isinstance(sub_comment, dict), "Each sub-comment should be a dictionary"
+                assert all(key in sub_comment for key in expected_subcomment_keys), \
+                    f"Each sub-comment should contain the keys: {expected_subcomment_keys}"
+                assert sub_comment.get('properties') is not None, "sub-comment properties should not be None"
+                assert sub_comment.get('author') is not None, "sub-comment author should not be None"
+                assert sub_comment.get('key') is not None, "sub-comment key should not be None"
+        
+        # Test filtering with random comment ID
+        if len(comment_threads) > 0:
+            # Pick a random comment ID from the results
+            random_thread = random.choice(comment_threads)
+            random_comment_id = random_thread.get('root_comment_id')
+            
+            # Test filtering with the randomly selected comment ID
+            filtered_result = youtube_api.get_video_comment_threads(video_id, comment_ids=[random_comment_id])
+            
+            # Verify filtered result structure
+            assert isinstance(filtered_result, dict), "Filtered result should be a dictionary"
+            assert filtered_result.get('comment_threads') is not None, "Filtered result should contain 'comment_threads' key"
+            
+            filtered_threads = filtered_result.get('comment_threads')
+            assert isinstance(filtered_threads, list), "Filtered threads should be a list"
+            assert len(filtered_threads) > 0, "Should return at least one filtered thread"
+            
+            # Verify the filtered thread matches our requested ID
+            returned_ids = [thread.get('root_comment_id') for thread in filtered_threads]
+            assert random_comment_id in returned_ids, f"Filtered result should contain the requested comment ID: {random_comment_id}"
+            
+            # Find the specific thread that matches our random ID
+            matching_thread = next(thread for thread in filtered_threads if thread.get('root_comment_id') == random_comment_id)
+            
+            # Verify the matching thread has the same structure as the original
+            assert isinstance(matching_thread, dict), "Matching thread should be a dictionary"
+            assert all(key in matching_thread for key in expected_thread_keys), \
+                f"Matching thread should contain the keys: {expected_thread_keys}"
+            
+            # Verify sub-comments in filtered result
+            filtered_sub_comments = matching_thread.get('sub_comments')
+            assert isinstance(filtered_sub_comments, list), "Filtered sub-comments should be a list"
+            assert len(filtered_sub_comments) > 0, "Filtered sub-comments should not be empty"
+            
+            # Verify each filtered sub-comment structure
+            for sub_comment in filtered_sub_comments:
+                assert isinstance(sub_comment, dict), "Each filtered sub-comment should be a dictionary"
+                assert all(key in sub_comment for key in expected_subcomment_keys), \
+                    f"Each filtered sub-comment should contain the keys: {expected_subcomment_keys}"
+                assert sub_comment.get('properties') is not None, "Filtered sub-comment properties should not be None"
+                assert sub_comment.get('author') is not None, "Filtered sub-comment author should not be None"
+                assert sub_comment.get('key') is not None, "Filtered sub-comment key should not be None"
+            
+            print(f"Successfully tested filtering with random comment ID: {random_comment_id}")

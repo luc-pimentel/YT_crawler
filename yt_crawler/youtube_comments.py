@@ -101,8 +101,10 @@ class CommentsMixin:
 
 
     def get_video_comment_threads(self, video_id:str, comment_ids:list = [], max_depth:int = 20):
+        ## TODO: Add max depth logic and implement while loop to fetch more than the first set of comments
 
-        
+
+        comment_replies = []
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
         initial_data_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialData')
 
@@ -118,15 +120,15 @@ class CommentsMixin:
             data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/next?prettyPrint=false')
             
             try:
-                framework_updates = data#.get('frameworkUpdates')#.get('entityBatchUpdate')#.get('mutations')
-                continuation_items = framework_updates.get('onResponseReceivedEndpoints')[1].get('reloadContinuationItemsCommand').get('continuationItems')
-                threads = [item.get('commentThreadRenderer').get('replies') for item in continuation_items if 'replies' in item.get('commentThreadRenderer').keys()]
+                framework_updates = data.get('onResponseReceivedEndpoints')[-1]
+                if 'reloadContinuationItemsCommand' in framework_updates.keys():
+                    continuation_items = framework_updates.get('reloadContinuationItemsCommand').get('continuationItems')
+                elif 'appendContinuationItemsAction' in framework_updates.keys():
+                    continuation_items = framework_updates.get('appendContinuationItemsAction').get('continuationItems')
+                threads = [item.get('commentThreadRenderer').get('replies') for item in continuation_items if item.get('commentThreadRenderer') and 'replies' in item.get('commentThreadRenderer').keys()]
                 
-                comment_replies = [thread.get('commentRepliesRenderer').get('contents')[0] for thread in threads]
-
 
                 if comment_ids:
-                    comment_replies = []
                     for thread in threads:
                         root_comment_id = thread.get('commentRepliesRenderer').get('targetId').split('comment-replies-item-')[1]
                         if root_comment_id in comment_ids:
@@ -134,7 +136,6 @@ class CommentsMixin:
                             reply_content['root_comment_id'] = root_comment_id
                             comment_replies.append(reply_content)
                 else:
-                    comment_replies = []
                     for thread in threads:
                         root_comment_id = thread.get('commentRepliesRenderer').get('targetId').split('comment-replies-item-')[1]
                         reply_content = thread.get('commentRepliesRenderer').get('contents')[0]
@@ -142,32 +143,38 @@ class CommentsMixin:
                         comment_replies.append(reply_content)
 
 
-            except (AttributeError, TypeError):
-                raise Exception("Could not parse comment data from response")
-            
+            except Exception as e:
+                print(f"Failure on continuation token: {continuation_token}")
+                return framework_updates
 
-            comment_threads_params = [{'root_comment_id': comment_reply.get('root_comment_id'),
+            continuation_data = self.get_comment_continuation_data(data)
+            if continuation_data:
+                continuation_token = continuation_data['continuation_token']
+                click_tracking_params = continuation_data['click_tracking_params']
+            else:
+                continuation_token = None
+
+
+        comment_threads_params = [{'root_comment_id': comment_reply.get('root_comment_id'),
                                        'continuation_token': comment_reply.get('continuationItemRenderer').get('continuationEndpoint').get('continuationCommand').get('token'),
                                        'click_tracking_params': comment_reply.get('continuationItemRenderer').get('continuationEndpoint').get('clickTrackingParams')} for comment_reply in comment_replies]
             
 
-            comment_threads_results = []
-            for comment_thread_params in comment_threads_params:
+        comment_threads_results = []
+        for comment_thread_params in comment_threads_params:
 
-                comment_thread_continuation = fetch_youtube_continuation_data(comment_thread_params['continuation_token'],
+            comment_thread_continuation = fetch_youtube_continuation_data(comment_thread_params['continuation_token'],
                                             comment_thread_params['click_tracking_params'],
                                             '/youtubei/v1/next?prettyPrint=false')
                 
-                mutations = comment_thread_continuation.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
+            mutations = comment_thread_continuation.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
 
-                sub_comments = [mutation.get('payload').get('commentEntityPayload') for mutation in mutations if 'commentEntityPayload' in mutation.get('payload').keys()]
+            sub_comments = [mutation.get('payload').get('commentEntityPayload') for mutation in mutations if 'commentEntityPayload' in mutation.get('payload').keys()]
 
-                thread_dict = {'root_comment_id': comment_thread_params['root_comment_id'], 'sub_comments': sub_comments}
+            thread_dict = {'root_comment_id': comment_thread_params['root_comment_id'], 'sub_comments': sub_comments}
 
-                comment_threads_results.append(thread_dict)
+            comment_threads_results.append(thread_dict)
             
-            ## TODO: Add max depth logic and implement while loop to fetch more than the first set of comments
-            continuation_token = None
             
 
         return {'comment_threads': comment_threads_results}
