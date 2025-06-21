@@ -4,6 +4,41 @@ from .utils import *
 class CommentsMixin:
     """Mixin class for YouTube comments functionality"""
     
+    def get_comment_continuation_data(self, data):
+        """
+        Extract continuation token and click tracking params from YouTube response data.
+        
+        Args:
+            data (dict): YouTube API response data
+            
+        Returns:
+            dict or None: Dictionary containing 'continuation_token' and 'click_tracking_params'
+                         if continuation data exists, None otherwise
+        """
+        try:
+            response_endpoint = data.get('onResponseReceivedEndpoints')[-1]
+            
+            # Try 'reloadContinuationItemsCommand' first
+            if 'reloadContinuationItemsCommand' in response_endpoint:
+                continuation_item_renderer = response_endpoint.get('reloadContinuationItemsCommand').get('continuationItems')[-1]
+            # Fall back to 'appendContinuationItemsAction'
+            elif 'appendContinuationItemsAction' in response_endpoint:
+                continuation_item_renderer = response_endpoint.get('appendContinuationItemsAction').get('continuationItems')[-1]
+            else:
+                # Neither key found, no more continuation data
+                return None
+            
+            continuation_token = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('continuationCommand').get('token')
+            click_tracking_params = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('clickTrackingParams')
+            
+            return {
+                'continuation_token': continuation_token,
+                'click_tracking_params': click_tracking_params
+            }
+        except (AttributeError, IndexError, TypeError):
+            # No more continuation data available
+            return None
+    
     def get_video_comments(self, video_id, n_comments=None, sort_by='top_comments'):
         """
         Get video comments from YouTube video ID
@@ -48,25 +83,12 @@ class CommentsMixin:
             if n_comments is not None and len(all_comments) >= n_comments:
                 break
             
-            # Extract continuation data for next batch - handle both possible response structures
-            try:
-                response_endpoint = data.get('onResponseReceivedEndpoints')[-1]
-                
-                # Try 'reloadContinuationItemsCommand' first
-                if 'reloadContinuationItemsCommand' in response_endpoint:
-                    continuation_item_renderer = response_endpoint.get('reloadContinuationItemsCommand').get('continuationItems')[-1]
-                # Fall back to 'appendContinuationItemsAction'
-                elif 'appendContinuationItemsAction' in response_endpoint:
-                    continuation_item_renderer = response_endpoint.get('appendContinuationItemsAction').get('continuationItems')[-1]
-                else:
-                    # Neither key found, no more continuation data
-                    continuation_token = None
-                    continue
-                
-                continuation_token = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('continuationCommand').get('token')
-                click_tracking_params = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('clickTrackingParams')
-            except (AttributeError, IndexError, TypeError):
-                # No more continuation data available
+            # Extract continuation data for next batch using utility function
+            continuation_data = self.get_comment_continuation_data(data)
+            if continuation_data:
+                continuation_token = continuation_data['continuation_token']
+                click_tracking_params = continuation_data['click_tracking_params']
+            else:
                 continuation_token = None
 
         # Truncate to exact number if n_comments is specified
@@ -75,7 +97,7 @@ class CommentsMixin:
 
         comments_json = {'comments': all_comments}
         return comments_json
-    
+
 
 
     def get_video_comment_threads(self, video_id:str, comment_ids:list = [], max_depth:int = 20):
