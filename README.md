@@ -17,7 +17,7 @@ A comprehensive Python library for crawling and extracting data from YouTube wit
 Clone the repository and install the required dependencies:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/luc-pimentel/YT_crawler.git
 cd YT_crawler
 pip install -r requirements.txt
 ```
