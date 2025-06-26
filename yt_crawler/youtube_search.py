@@ -143,13 +143,13 @@ class SearchMixin:
                 
                 # Navigate through the nested JSON structure to get filter groups
                 search_filter_groups = (json_data
-                                    .get('searchFilterButton')
-                                    .get('buttonRenderer')
-                                    .get('command')
-                                    .get('openPopupAction')
-                                    .get('popup')
-                                    .get('searchFilterOptionsDialogRenderer')
-                                    .get('groups'))
+                                    .get('searchFilterButton', {})
+                                    .get('buttonRenderer', {})
+                                    .get('command', {})
+                                    .get('openPopupAction', {})
+                                    .get('popup', {})
+                                    .get('searchFilterOptionsDialogRenderer', {})
+                                    .get('groups', []))
                 
                 # Get the filter group index and option index
                 filter_group_index = SEARCH_FILTER_DICT[filter_name]['index']
@@ -176,7 +176,7 @@ class SearchMixin:
         return current_url
     
 
-    def search(self, search_term: str, n_videos: int = 100, upload_date=None, duration=None, features=None, sort_by: str = 'relevance'):
+    def search(self, search_term: str, n_videos: int = 100, upload_date=None, duration=None, features=None, sort_by: str = 'relevance') -> dict:
         """
         Search YouTube videos
         

@@ -35,7 +35,7 @@ class TestYoutubeAPIComments:
         assert isinstance(result.get('comments'), list), "Comments should be a list"
         
         # Verify the comments list is not empty
-        comments = result.get('comments')
+        comments = result.get('comments', [])
         assert len(comments) > 0, "Comments list should not be empty"
         assert comments, "Comments list should be truthy (not empty)"
 
@@ -142,7 +142,7 @@ class TestYoutubeAPIComments:
         assert isinstance(result.get('comments'), list), "Comments should be a list"
         
         # Verify the comments list is not empty
-        comments = result.get('comments')
+        comments = result.get('comments', [])
         assert len(comments) > 0, "Comments list should not be empty"
         assert comments, "Comments list should be truthy (not empty)"
         
@@ -176,7 +176,7 @@ class TestYoutubeAPIComments:
         assert isinstance(result.get('comments'), list), "Comments should be a list"
         
         # Verify the comments list is not empty
-        comments = result.get('comments')
+        comments = result.get('comments', [])
         assert len(comments) > 0, "Comments list should not be empty"
         assert comments, "Comments list should be truthy (not empty)"
         

@@ -58,9 +58,11 @@ class CommentsMixin:
         
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
         initial_data_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialData')
+        if not initial_data_response_json:
+            raise Exception("Could not find initial data response JSON")
 
         try:
-            comments_section_header = initial_data_response_json.get('engagementPanels')[0].get('engagementPanelSectionListRenderer').get('header')
+            comments_section_header = initial_data_response_json.get('engagementPanels', [])[0].get('engagementPanelSectionListRenderer').get('header')
             selected_comment_type = comments_section_header.get('engagementPanelTitleHeaderRenderer').get('menu').get('sortFilterSubMenuRenderer').get('subMenuItems')[comments_dict[sort_by]]
             click_tracking_params = selected_comment_type.get('serviceEndpoint').get('clickTrackingParams')
             continuation_token = selected_comment_type.get('serviceEndpoint').get('continuationCommand').get('token')
@@ -73,7 +75,7 @@ class CommentsMixin:
             data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/next?prettyPrint=false')
             
             try:
-                mutations_list = data.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
+                mutations_list = data.get('frameworkUpdates', {}).get('entityBatchUpdate', {}).get('mutations', [])
                 comments = [mutation.get('payload').get('commentEntityPayload') for mutation in mutations_list if 'commentEntityPayload' in mutation.get('payload').keys()]
                 all_comments.extend(comments)
             except (AttributeError, TypeError):
@@ -107,9 +109,11 @@ class CommentsMixin:
         comment_replies = []
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
         initial_data_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialData')
+        if not initial_data_response_json:
+            raise Exception("Could not find initial data response JSON")
 
         try:
-            comments_section_header = initial_data_response_json.get('engagementPanels')[0].get('engagementPanelSectionListRenderer').get('header')
+            comments_section_header = initial_data_response_json.get('engagementPanels', [])[0].get('engagementPanelSectionListRenderer').get('header')
             selected_comment_type = comments_section_header.get('engagementPanelTitleHeaderRenderer').get('menu').get('sortFilterSubMenuRenderer').get('subMenuItems')[1]
             click_tracking_params = selected_comment_type.get('serviceEndpoint').get('clickTrackingParams')
             continuation_token = selected_comment_type.get('serviceEndpoint').get('continuationCommand').get('token')
@@ -120,13 +124,14 @@ class CommentsMixin:
             data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/next?prettyPrint=false')
             
             try:
-                framework_updates = data.get('onResponseReceivedEndpoints')[-1]
+                framework_updates = data.get('onResponseReceivedEndpoints', [])[-1]
                 if 'reloadContinuationItemsCommand' in framework_updates.keys():
                     continuation_items = framework_updates.get('reloadContinuationItemsCommand').get('continuationItems')
                 elif 'appendContinuationItemsAction' in framework_updates.keys():
                     continuation_items = framework_updates.get('appendContinuationItemsAction').get('continuationItems')
-                threads = [item.get('commentThreadRenderer').get('replies') for item in continuation_items if item.get('commentThreadRenderer') and 'replies' in item.get('commentThreadRenderer').keys()]
-                
+                else:
+                    raise Exception("Could not find comment threads")
+                threads = [item.get('commentThreadRenderer', {}).get('replies') for item in continuation_items if item.get('commentThreadRenderer') and 'replies' in item.get('commentThreadRenderer').keys()]
 
                 if comment_ids:
                     for thread in threads:
@@ -144,8 +149,7 @@ class CommentsMixin:
 
 
             except Exception as e:
-                print(f"Failure on continuation token: {continuation_token}")
-                return framework_updates
+                raise Exception(f"Failure on continuation token: {continuation_token}")
 
             continuation_data = self.get_comment_continuation_data(data)
             if continuation_data:
@@ -167,7 +171,7 @@ class CommentsMixin:
                                             comment_thread_params['click_tracking_params'],
                                             '/youtubei/v1/next?prettyPrint=false')
                 
-            mutations = comment_thread_continuation.get('frameworkUpdates').get('entityBatchUpdate').get('mutations')
+            mutations = comment_thread_continuation.get('frameworkUpdates', {}).get('entityBatchUpdate', {}).get('mutations', [])
 
             sub_comments = [mutation.get('payload').get('commentEntityPayload') for mutation in mutations if 'commentEntityPayload' in mutation.get('payload').keys()]
 

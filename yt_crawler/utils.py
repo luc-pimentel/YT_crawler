@@ -4,7 +4,7 @@ import json
 import re
 from .config import HEADERS
 
-def xml_transcript_to_json_bs4(xml_string):
+def xml_transcript_to_json_bs4(xml_string: str) -> dict:
     """Convert YouTube transcript XML to JSON using BeautifulSoup"""
     soup = BeautifulSoup(xml_string, 'xml')
     
@@ -26,7 +26,7 @@ def xml_transcript_to_json_bs4(xml_string):
     return transcript_data
 
 
-def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=None, payload=None):
+def extract_youtube_initial_data(url: str, variable_name: str = 'ytInitialData', headers: dict | None = None, payload: dict | None = None) -> dict | None:
     """
     Extract YouTube initial data from a given URL.
     
@@ -69,7 +69,7 @@ def extract_youtube_initial_data(url, variable_name='ytInitialData', headers=Non
         raise Exception(f"Failed to parse {variable_name} JSON: {str(e)}")
     
 
-def find_nested_key(obj, target_key):
+def find_nested_key(obj: dict | list, target_key: str) -> dict | None:
     """
     Recursively search for a key in nested dictionaries/lists
     
@@ -95,7 +95,7 @@ def find_nested_key(obj, target_key):
     return None
 
 
-def extract_json_from_scripts(scripts, target_key):
+def extract_json_from_scripts(scripts: list[BeautifulSoup], target_key: str) -> dict | None:
     """
     Extract and parse JSON data from BeautifulSoup script elements, searching for a specific key
     
@@ -130,7 +130,7 @@ def extract_json_from_scripts(scripts, target_key):
     return None
 
 
-def fetch_youtube_continuation_data(continuation_token, click_tracking_params, api_url):
+def fetch_youtube_continuation_data(continuation_token: str, click_tracking_params: str, api_url: str) -> dict:
     """
     Fetch YouTube comments data using continuation token and click tracking params.
     
