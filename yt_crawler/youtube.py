@@ -29,9 +29,19 @@ class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, Trendin
         if not initial_player_response_json:
             raise Exception("Could not find initial player response JSON")
         
-        video_details = initial_player_response_json.get('videoDetails', {})
+        # Extract both videoDetails and microformat
+        video_details_data = initial_player_response_json.get('videoDetails', {})
+        microformat_data = initial_player_response_json.get('microformat', {})
 
-        if not video_details:
+        if not video_details_data :
             raise Exception("No video details found")
+        if not microformat_data:
+            raise Exception("No microformat data found")
+
+        # Wrap both in video_details dictionary
+        video_details = {
+            'videoDetails': video_details_data,
+            'microformat': microformat_data
+        }
         
         return video_details

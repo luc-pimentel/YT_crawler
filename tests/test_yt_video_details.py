@@ -30,8 +30,40 @@ class TestYoutubeVideoDetails:
         assert len(result) > 0, "Result should not be empty"
         assert result, "Result should be truthy (not empty)"
         
-        # Verify the dictionary contains all required keys
-        required_keys = ['videoId', 'title', 'lengthSeconds', 'keywords', 'channelId', 
-                        'shortDescription', 'thumbnail', 'viewCount', 'author']
+        # Verify the top-level structure contains both required sections
+        assert 'videoDetails' in result, "Result should contain 'videoDetails' key"
+        assert 'microformat' in result, "Result should contain 'microformat' key"
         
-        assert all(key in result for key in required_keys), "Result should contain all required keys"
+        # Verify videoDetails section contains all required keys
+        video_details = result['videoDetails']
+        required_video_keys = ['videoId', 'title', 'lengthSeconds', 'keywords', 'channelId', 
+                              'shortDescription', 'thumbnail', 'viewCount', 'author']
+        
+        assert all(key in video_details for key in required_video_keys), \
+            "videoDetails should contain all required keys"
+    
+    def test_get_video_details_microformat(self, youtube_api):
+        """Test that microformat section contains all required playerMicroformatRenderer keys"""
+        video_id = "nUgGY18iTJw"
+        
+        # Call the function
+        result = youtube_api.get_video_details(video_id)
+        
+        # Verify microformat structure
+        assert 'microformat' in result, "Result should contain 'microformat' key"
+        microformat = result['microformat']
+        
+        assert 'playerMicroformatRenderer' in microformat, \
+            "microformat should contain 'playerMicroformatRenderer' key"
+        
+        # Verify playerMicroformatRenderer contains all required keys
+        player_microformat = microformat['playerMicroformatRenderer']
+        required_microformat_keys = [
+            'thumbnail', 'embed', 'title', 'lengthSeconds', 'ownerProfileUrl', 
+            'externalChannelId', 'isFamilySafe', 'availableCountries', 'isUnlisted', 
+            'hasYpcMetadata', 'viewCount', 'category', 'publishDate', 'ownerChannelName', 
+            'uploadDate', 'isShortsEligible', 'externalVideoId', 'likeCount', 'canonicalUrl'
+        ]
+        
+        assert all(key in player_microformat for key in required_microformat_keys), \
+            "playerMicroformatRenderer should contain all required keys"
