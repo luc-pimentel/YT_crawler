@@ -4,7 +4,7 @@ from .utils import *
 class CommentsMixin:
     """Mixin class for YouTube comments functionality"""
     
-    def get_comment_continuation_data(self, data):
+    def get_comment_continuation_data(self, data) -> dict | None:
         """
         Extract continuation token and click tracking params from YouTube response data.
         
@@ -39,7 +39,7 @@ class CommentsMixin:
             # No more continuation data available
             return None
     
-    def get_video_comments(self, video_id, n_comments=None, sort_by='top_comments'):
+    def get_video_comments(self, video_id: str, n_comments: int | None = None, sort_by: str = 'top_comments') -> dict:
         """
         Get video comments from YouTube video ID
             
@@ -102,7 +102,7 @@ class CommentsMixin:
 
 
 
-    def get_video_comment_threads(self, video_id:str, comment_ids:list = [], max_depth:int = 20):
+    def get_video_comment_threads(self, video_id:str, comment_ids:list = [], max_depth:int = 20) -> dict:
         ## TODO: Add max depth logic and implement while loop to fetch more than the first set of comments
 
 

@@ -32,7 +32,7 @@ class TestYoutubeAPI:
         assert isinstance(result.get('trending'), list), "Trending should be a list"
         
         # Verify the trending list is not empty
-        trending = result.get('trending')
+        trending = result.get('trending', [])
         assert len(trending) > 0, "Trending list should not be empty"
         assert trending, "Trending list should be truthy (not empty)"
 
@@ -58,7 +58,7 @@ class TestYoutubeAPI:
         assert isinstance(result.get('trending'), list), f"Trending should be a list for category '{category}'"
         
         # Verify the trending list is not empty
-        trending = result.get('trending')
+        trending = result.get('trending', [])
         assert len(trending) > 0, f"Trending list should not be empty for category '{category}'"
         assert trending, f"Trending list should be truthy (not empty) for category '{category}'"
         

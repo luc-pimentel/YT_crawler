@@ -65,7 +65,7 @@ class SearchMixin:
     """Mixin class providing YouTube search functionality"""
 
 
-    def _get_search_url(self, search_term, upload_date=None, duration=None, features=None, sort_by='relevance'):
+    def _get_search_url(self, search_term: str, upload_date: str | None = None, duration: str | None = None, features: str | None = None, sort_by: str = 'relevance') -> str:
         """
         Get a filtered YouTube search URL with specified filters.
         
@@ -176,7 +176,7 @@ class SearchMixin:
         return current_url
     
 
-    def search(self, search_term: str, n_videos: int = 100, upload_date=None, duration=None, features=None, sort_by: str = 'relevance') -> dict:
+    def search(self, search_term: str, n_videos: int = 100, upload_date: str | None = None, duration: str | None = None, features: str | None = None, sort_by: str = 'relevance') -> dict:
         """
         Search YouTube videos
         
@@ -195,9 +195,11 @@ class SearchMixin:
         # Use the updated _get_search_url method to construct the URL with all filters
         url = self._get_search_url(search_term, upload_date, duration, features, sort_by)
         raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
+        if not raw_search_json:
+            raise Exception("Could not find initial data response JSON")
         
         try:
-            search_contents = raw_search_json.get('contents').get('twoColumnSearchResultsRenderer').get('primaryContents').get('sectionListRenderer').get('contents')
+            search_contents = raw_search_json.get('contents', {}).get('twoColumnSearchResultsRenderer', {}).get('primaryContents', {}).get('sectionListRenderer', {}).get('contents', [])
             item_section_renderer_contents = search_contents[0].get('itemSectionRenderer').get('contents')
             videos = [video.get('videoRenderer') for video in item_section_renderer_contents if video.get('videoRenderer')]
         except (AttributeError, IndexError, TypeError):
@@ -215,7 +217,7 @@ class SearchMixin:
             try:
                 continuation_data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/search')
                 
-                continuation_items = continuation_data.get('onResponseReceivedCommands')[0].get('appendContinuationItemsAction').get('continuationItems')
+                continuation_items = continuation_data.get('onResponseReceivedCommands', [])[0].get('appendContinuationItemsAction', {}).get('continuationItems', [])
                 
                 next_set_of_videos = continuation_items[0].get('itemSectionRenderer').get('contents')
                 next_videos = [video.get('videoRenderer') for video in next_set_of_videos if video.get('videoRenderer')]

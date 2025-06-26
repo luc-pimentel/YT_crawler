@@ -17,7 +17,7 @@ class TestYoutubeNews:
         """Create a YoutubeAPI instance for testing"""
         return YoutubeAPI()
 
-    def _validate_trending_news_item_structure(self, item, context=""):
+    def _validate_trending_news_item_structure(self, item: dict, context: str = "") -> None:
         """Helper method to validate the structure of a single trending news item"""
         # Verify each item is a dictionary
         assert isinstance(item, dict), f"Each trending news item should be a dictionary{context}"
@@ -43,7 +43,7 @@ class TestYoutubeNews:
         assert isinstance(result.get('trending_news'), list), "Trending news should be a list"
         
         # Verify the trending_news list is not empty
-        trending_news = result.get('trending_news')
+        trending_news = result.get('trending_news', [])
         assert len(trending_news) > 0, "Trending news list should not be empty"
         assert trending_news, "Trending news list should be truthy (not empty)"
         
@@ -68,7 +68,7 @@ class TestYoutubeNews:
             assert isinstance(result.get('trending_news'), list), f"Trending news should be a list for category '{category}'"
             
             # Verify the trending_news list is not empty
-            trending_news = result.get('trending_news')
+            trending_news = result.get('trending_news', [])
             assert len(trending_news) > 0, f"Trending news list should not be empty for category '{category}'"
             assert trending_news, f"Trending news list should be truthy (not empty) for category '{category}'"
             

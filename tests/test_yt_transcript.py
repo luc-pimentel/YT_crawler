@@ -33,7 +33,7 @@ class TestYoutubeTranscript:
         assert isinstance(result.get('transcript'), list), "Transcript should be a list"
         
         # Verify the transcript list is not empty
-        transcript = result.get('transcript')
+        transcript = result.get('transcript', [])
         assert len(transcript) > 0, "Transcript list should not be empty"
         assert transcript, "Transcript list should be truthy (not empty)"
 

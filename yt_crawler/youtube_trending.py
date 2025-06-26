@@ -9,7 +9,7 @@ trending_category_dict = {'now': 0,
 
 class TrendingMixin:
     
-    def get_trending_videos(self, category='now'):
+    def get_trending_videos(self, category: str = 'now') -> dict:
         """
         Scrapes YouTube trending videos and returns them in a structured format.
         
@@ -30,25 +30,31 @@ class TrendingMixin:
             # Use existing logic for 'now' category
             url = base_url + "/feed/trending"
             raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
+            if not raw_search_json:
+                raise Exception("Could not find initial data response JSON")
             content_tab_index = 0
         else:
             # For other categories, first get the main trending page to extract category URL
             main_url = base_url + "/feed/trending"
             main_json = extract_youtube_initial_data(main_url, 'ytInitialData')
+            if not main_json:
+                raise Exception("Could not find initial data response JSON")
             
             try:
-                tabs = main_json.get('contents').get('twoColumnBrowseResultsRenderer').get('tabs')
+                tabs = main_json.get('contents', {}).get('twoColumnBrowseResultsRenderer', {}).get('tabs', [])
                 category_url = tabs[category_index].get('tabRenderer').get('endpoint').get('commandMetadata').get('webCommandMetadata').get('url')
                 
                 # Make request to category-specific URL
                 url = base_url + category_url
                 raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
+                if not raw_search_json:
+                    raise Exception("Could not find initial data response JSON")
                 content_tab_index = category_index
             except (AttributeError, IndexError, TypeError):
                 raise Exception(f"Could not extract URL for category '{category}'")
         
         try:
-            tabs = raw_search_json.get('contents').get('twoColumnBrowseResultsRenderer').get('tabs')
+            tabs = raw_search_json.get('contents', {}).get('twoColumnBrowseResultsRenderer', {}).get('tabs', [])
             contents = tabs[content_tab_index].get('tabRenderer').get('content').get('sectionListRenderer').get('contents')
         except (AttributeError, IndexError, TypeError):
             raise Exception(f"Could not parse trending videos structure for category '{category}'")

@@ -4,7 +4,7 @@ from .utils import extract_youtube_initial_data, xml_transcript_to_json_bs4
 
 class TranscriptMixin:
     
-    def get_video_transcript(self, video_id):
+    def get_video_transcript(self, video_id: str) -> dict:
         """
         Get video transcript from YouTube video ID
         
@@ -19,13 +19,15 @@ class TranscriptMixin:
         
         # Get the webpage content
         initial_player_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialPlayerResponse')
-
-        captions_element = initial_player_response_json.get('captions')
+        if not initial_player_response_json:
+            raise Exception("Could not find initial player response JSON")
+        
+        captions_element = initial_player_response_json.get('captions', {})
 
         if not captions_element:
             raise Exception("Video has no transcript available")
 
-        caption_url = captions_element.get('playerCaptionsTracklistRenderer').get('captionTracks')[0].get('baseUrl')
+        caption_url = captions_element.get('playerCaptionsTracklistRenderer', {}).get('captionTracks', [])[0].get('baseUrl')
         caption_request = requests.get(caption_url)
         video_transcript = xml_transcript_to_json_bs4(caption_request.text)
 

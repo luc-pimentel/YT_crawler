@@ -33,7 +33,7 @@ class TestYoutubeSearch:
         assert isinstance(result.get('search_results'), list), "Search results should be a list"
         
         # Verify the search_results list is not empty
-        search_results = result.get('search_results')
+        search_results = result.get('search_results', [])
         assert len(search_results) > 0, "Search results list should not be empty"
         assert search_results, "Search results list should be truthy (not empty)"
 

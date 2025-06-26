@@ -35,10 +35,12 @@ class NewsMixin:
         
         url = f"https://www.youtube.com/feed/news_destination/{category}"
         initial_data_response_json = extract_youtube_initial_data(url, 'ytInitialData')
+        if not initial_data_response_json:
+            raise Exception("Could not find initial data response JSON")
         #return initial_data_response_json
         
         try:
-            tabs = initial_data_response_json.get('contents').get('twoColumnBrowseResultsRenderer').get('tabs')
+            tabs = initial_data_response_json.get('contents', {}).get('twoColumnBrowseResultsRenderer', {}).get('tabs', [])
             tab_contents = tabs[categories_dict[category]].get('tabRenderer').get('content').get('richGridRenderer').get('contents')
             trending_sections = [tab_content.get('richSectionRenderer').get('content').get('richShelfRenderer') for tab_content in tab_contents]
         except (AttributeError, IndexError, TypeError):

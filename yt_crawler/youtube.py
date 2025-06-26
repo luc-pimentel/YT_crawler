@@ -11,7 +11,7 @@ from .youtube_trending import TrendingMixin
 
 class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, TrendingMixin):
 
-    def get_video_details(self, video_id):
+    def get_video_details(self, video_id: str) -> dict:
         """
         Get video details from YouTube video ID
         
@@ -26,8 +26,10 @@ class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, Trendin
         
         # Get the webpage content
         initial_player_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialPlayerResponse')
-
-        video_details = initial_player_response_json.get('videoDetails')
+        if not initial_player_response_json:
+            raise Exception("Could not find initial player response JSON")
+        
+        video_details = initial_player_response_json.get('videoDetails', {})
 
         if not video_details:
             raise Exception("No video details found")
