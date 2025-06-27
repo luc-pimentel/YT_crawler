@@ -70,7 +70,7 @@ def extract_youtube_initial_data(url: str, variable_name: str = 'ytInitialData',
         raise Exception(f"Failed to parse {variable_name} JSON: {str(e)}")
     
 
-def find_nested_key(obj: dict[str, Any] | list[Any], target_key: str) -> dict[str, Any] | None:
+def find_nested_key(obj: dict[str, Any] | list[Any] | Any, target_key: str) -> dict[str, Any] | None:
     """
     Recursively search for a key in nested dictionaries/lists
     
@@ -88,7 +88,7 @@ def find_nested_key(obj: dict[str, Any] | list[Any], target_key: str) -> dict[st
             result = find_nested_key(value, target_key)
             if result is not None:
                 return result
-    else:  # obj is list[Any]
+    elif isinstance(obj, list):
         for item in obj:
             result = find_nested_key(item, target_key)
             if result is not None:

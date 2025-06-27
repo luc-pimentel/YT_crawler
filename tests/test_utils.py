@@ -1,7 +1,7 @@
-import pytest
 import sys
 import os
 import requests
+from typing import Any
 
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -86,7 +86,7 @@ class TestXmlTranscriptToJsonBs4:
         xml_content = response.text
         
         # Call the function
-        result = xml_transcript_to_json_bs4(xml_content)
+        result: dict[str, list[dict[str, Any]]] = xml_transcript_to_json_bs4(xml_content)
         
         # Verify the result structure
         assert isinstance(result, dict), "Result should be a dictionary"
@@ -128,6 +128,7 @@ class TestExtractJsonFromScripts:
         
         # Test searching for searchFilterButton (known to exist in search results)
         result = extract_json_from_scripts(scripts, 'searchFilterButton')
+        print(result)
         
         # Verify the result
         assert result is not None, "Should find searchFilterButton in YouTube search page"
