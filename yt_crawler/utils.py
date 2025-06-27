@@ -3,12 +3,13 @@ import requests
 import json
 import re
 from .config import HEADERS
+from typing import Any
 
-def xml_transcript_to_json_bs4(xml_string: str) -> dict:
+def xml_transcript_to_json_bs4(xml_string: str) -> dict[str, Any]:
     """Convert YouTube transcript XML to JSON using BeautifulSoup"""
     soup = BeautifulSoup(xml_string, 'xml')
     
-    transcript_data = {
+    transcript_data: dict[str, Any] = {
         "transcript": []
     }
     
@@ -26,7 +27,7 @@ def xml_transcript_to_json_bs4(xml_string: str) -> dict:
     return transcript_data
 
 
-def extract_youtube_initial_data(url: str, variable_name: str = 'ytInitialData', headers: dict | None = None, payload: dict | None = None) -> dict | None:
+def extract_youtube_initial_data(url: str, variable_name: str = 'ytInitialData', headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> dict[str, Any] | None:
     """
     Extract YouTube initial data from a given URL.
     
@@ -69,7 +70,7 @@ def extract_youtube_initial_data(url: str, variable_name: str = 'ytInitialData',
         raise Exception(f"Failed to parse {variable_name} JSON: {str(e)}")
     
 
-def find_nested_key(obj: dict | list, target_key: str) -> dict | None:
+def find_nested_key(obj: dict[str, Any] | list[Any], target_key: str) -> dict[str, Any] | None:
     """
     Recursively search for a key in nested dictionaries/lists
     
@@ -87,7 +88,7 @@ def find_nested_key(obj: dict | list, target_key: str) -> dict | None:
             result = find_nested_key(value, target_key)
             if result is not None:
                 return result
-    elif isinstance(obj, list):
+    else:  # obj is list[Any]
         for item in obj:
             result = find_nested_key(item, target_key)
             if result is not None:
@@ -95,7 +96,7 @@ def find_nested_key(obj: dict | list, target_key: str) -> dict | None:
     return None
 
 
-def extract_json_from_scripts(scripts: list[BeautifulSoup], target_key: str) -> dict | None:
+def extract_json_from_scripts(scripts: list[BeautifulSoup], target_key: str) -> dict[str, Any] | None:
     """
     Extract and parse JSON data from BeautifulSoup script elements, searching for a specific key
     
@@ -124,13 +125,13 @@ def extract_json_from_scripts(scripts: list[BeautifulSoup], target_key: str) -> 
                     except json.JSONDecodeError:
                         continue
                         
-            except Exception as e:
+            except Exception:
                 continue
     
     return None
 
 
-def fetch_youtube_continuation_data(continuation_token: str, click_tracking_params: str, api_url: str) -> dict:
+def fetch_youtube_continuation_data(continuation_token: str, click_tracking_params: str, api_url: str) -> dict[str, Any]:
     """
     Fetch YouTube comments data using continuation token and click tracking params.
     

@@ -9,7 +9,7 @@ trending_category_dict = {'now': 0,
 
 class TrendingMixin:
     
-    def get_trending_videos(self, category: str = 'now') -> dict:
+    def get_trending_videos(self, category: str = 'now') -> dict[str, Any]:
         """
         Scrapes YouTube trending videos and returns them in a structured format.
         
@@ -59,7 +59,7 @@ class TrendingMixin:
         except (AttributeError, IndexError, TypeError):
             raise Exception(f"Could not parse trending videos structure for category '{category}'")
         
-        videos_list = []
+        videos_list: list[dict[str, Any]] = []
         
         for content in contents:
             try:

@@ -14,7 +14,7 @@ categories_dict = {'top_stories': 0,
 
 class NewsMixin:
     
-    def get_trending_news(self, category: str = 'top_stories') -> dict:
+    def get_trending_news(self, category: str = 'top_stories') -> dict[str, Any]:
         """
         Scrapes YouTube's trending news page and returns trending video data.
         

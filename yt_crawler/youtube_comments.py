@@ -1,10 +1,9 @@
-import requests
 from .utils import *
 
 class CommentsMixin:
     """Mixin class for YouTube comments functionality"""
     
-    def get_comment_continuation_data(self, data) -> dict | None:
+    def get_comment_continuation_data(self, data: dict[str, Any]) -> dict[str, Any] | None:
         """
         Extract continuation token and click tracking params from YouTube response data.
         
@@ -16,20 +15,20 @@ class CommentsMixin:
                          if continuation data exists, None otherwise
         """
         try:
-            response_endpoint = data.get('onResponseReceivedEndpoints')[-1]
+            response_endpoint: dict[str, Any] = data.get('onResponseReceivedEndpoints', [])[-1]
             
             # Try 'reloadContinuationItemsCommand' first
             if 'reloadContinuationItemsCommand' in response_endpoint:
-                continuation_item_renderer = response_endpoint.get('reloadContinuationItemsCommand').get('continuationItems')[-1]
+                continuation_item_renderer: dict[str, Any] = response_endpoint.get('reloadContinuationItemsCommand', {}).get('continuationItems', [])[-1]
             # Fall back to 'appendContinuationItemsAction'
             elif 'appendContinuationItemsAction' in response_endpoint:
-                continuation_item_renderer = response_endpoint.get('appendContinuationItemsAction').get('continuationItems')[-1]
+                continuation_item_renderer: dict[str, Any] = response_endpoint.get('appendContinuationItemsAction', {}).get('continuationItems', [])[-1]
             else:
                 # Neither key found, no more continuation data
                 return None
             
-            continuation_token = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('continuationCommand').get('token')
-            click_tracking_params = continuation_item_renderer.get('continuationItemRenderer').get('continuationEndpoint').get('clickTrackingParams')
+            continuation_token: str = continuation_item_renderer.get('continuationItemRenderer', {}).get('continuationEndpoint', {}).get('continuationCommand', {}).get('token', '')
+            click_tracking_params: str = continuation_item_renderer.get('continuationItemRenderer', {}).get('continuationEndpoint', {}).get('clickTrackingParams', '')
             
             return {
                 'continuation_token': continuation_token,
@@ -39,7 +38,7 @@ class CommentsMixin:
             # No more continuation data available
             return None
     
-    def get_video_comments(self, video_id: str, n_comments: int | None = None, sort_by: str = 'top_comments') -> dict:
+    def get_video_comments(self, video_id: str, n_comments: int | None = None, sort_by: str = 'top_comments') -> dict[str, Any]:
         """
         Get video comments from YouTube video ID
             
@@ -69,7 +68,7 @@ class CommentsMixin:
         except (AttributeError, IndexError, TypeError):
             raise Exception("Could not find comment continuation data")
 
-        all_comments = []
+        all_comments: list[dict[str, Any]] = []
         
         while continuation_token:
             data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/next?prettyPrint=false')
@@ -102,11 +101,11 @@ class CommentsMixin:
 
 
 
-    def get_video_comment_threads(self, video_id:str, comment_ids:list = [], max_depth:int = 20) -> dict:
+    def get_video_comment_threads(self, video_id:str, comment_ids:list[str] = [], max_depth:int = 20) -> dict[str, Any]:
         ## TODO: Add max depth logic and implement while loop to fetch more than the first set of comments
 
 
-        comment_replies = []
+        comment_replies: list[dict[str, Any]] = []
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
         initial_data_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialData')
         if not initial_data_response_json:
@@ -148,7 +147,7 @@ class CommentsMixin:
                         comment_replies.append(reply_content)
 
 
-            except Exception as e:
+            except Exception:
                 raise Exception(f"Failure on continuation token: {continuation_token}")
 
             continuation_data = self.get_comment_continuation_data(data)
@@ -159,12 +158,12 @@ class CommentsMixin:
                 continuation_token = None
 
 
-        comment_threads_params = [{'root_comment_id': comment_reply.get('root_comment_id'),
-                                       'continuation_token': comment_reply.get('continuationItemRenderer').get('continuationEndpoint').get('continuationCommand').get('token'),
-                                       'click_tracking_params': comment_reply.get('continuationItemRenderer').get('continuationEndpoint').get('clickTrackingParams')} for comment_reply in comment_replies]
+        comment_threads_params: list[dict[str, Any]] = [{'root_comment_id': comment_reply.get('root_comment_id'),
+                                       'continuation_token': comment_reply.get('continuationItemRenderer', {}).get('continuationEndpoint', {}).get('continuationCommand', {}).get('token', ''),
+                                       'click_tracking_params': comment_reply.get('continuationItemRenderer', {}).get('continuationEndpoint', {}).get('clickTrackingParams', '')} for comment_reply in comment_replies]
             
 
-        comment_threads_results = []
+        comment_threads_results: list[dict[str, Any]] = []
         for comment_thread_params in comment_threads_params:
 
             comment_thread_continuation = fetch_youtube_continuation_data(comment_thread_params['continuation_token'],

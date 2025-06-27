@@ -1,10 +1,9 @@
 import requests
 from .utils import *
-from .config import HEADERS
 from .utils import extract_json_from_scripts
 
 
-SEARCH_FILTER_DICT = {
+SEARCH_FILTER_DICT: dict[str, Any] = {
     'upload_date': {
         'index': 0,
         'options': {
@@ -94,7 +93,7 @@ class SearchMixin:
         current_url = f"{base_url}/results?search_query={formatted_search_term}"
         
         # Collect active filters
-        active_filters = {}
+        active_filters: dict[str, str] = {}
         filter_params = {
             'upload_date': upload_date,
             'type': type,
@@ -112,7 +111,7 @@ class SearchMixin:
                 if filter_name not in SEARCH_FILTER_DICT:
                     raise ValueError(f"Unknown filter type: {filter_name}")
                 
-                filter_options = SEARCH_FILTER_DICT[filter_name]['options']
+                filter_options: dict[str, Any] = SEARCH_FILTER_DICT[filter_name]['options']
                 if filter_value not in filter_options:
                     raise ValueError(f"Invalid {filter_name} option '{filter_value}'. Must be one of: {list(filter_options.keys())}")
                 
@@ -176,7 +175,7 @@ class SearchMixin:
         return current_url
     
 
-    def search(self, search_term: str, n_videos: int = 100, upload_date: str | None = None, duration: str | None = None, features: str | None = None, sort_by: str = 'relevance') -> dict:
+    def search(self, search_term: str, n_videos: int = 100, upload_date: str | None = None, duration: str | None = None, features: str | None = None, sort_by: str = 'relevance') -> dict[str, Any]:
         """
         Search YouTube videos
         

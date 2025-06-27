@@ -1,10 +1,10 @@
 import requests
 from .utils import extract_youtube_initial_data, xml_transcript_to_json_bs4
-
+from typing import Any
 
 class TranscriptMixin:
     
-    def get_video_transcript(self, video_id: str) -> dict:
+    def get_video_transcript(self, video_id: str) -> dict[str, Any]:
         """
         Get video transcript from YouTube video ID
         
