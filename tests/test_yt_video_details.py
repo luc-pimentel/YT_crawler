@@ -12,11 +12,11 @@ class TestYoutubeVideoDetails:
     """Tests specifically for YouTube video details functionality"""
     
     @pytest.fixture
-    def youtube_api(self):
+    def youtube_api(self) -> YoutubeAPI:
         """Create a YoutubeAPI instance for testing"""
         return YoutubeAPI()
     
-    def test_get_video_details_success(self, youtube_api):
+    def test_get_video_details_success(self, youtube_api: YoutubeAPI):
         """Test that get_video_details works with a valid video ID and returns populated data"""
         video_id = "nUgGY18iTJw"
         
@@ -42,7 +42,7 @@ class TestYoutubeVideoDetails:
         assert all(key in video_details for key in required_video_keys), \
             "videoDetails should contain all required keys"
     
-    def test_get_video_details_microformat(self, youtube_api):
+    def test_get_video_details_microformat(self, youtube_api: YoutubeAPI):
         """Test that microformat section contains all required playerMicroformatRenderer keys"""
         video_id = "nUgGY18iTJw"
         

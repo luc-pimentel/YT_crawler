@@ -12,11 +12,11 @@ class TestYoutubeSearch:
     """Tests for YouTube search functionality"""
     
     @pytest.fixture
-    def youtube_api(self):
+    def youtube_api(self) -> YoutubeAPI:
         """Create a YoutubeAPI instance for testing"""
         return YoutubeAPI()
 
-    def test_search_success(self, youtube_api):
+    def test_search_success(self, youtube_api: YoutubeAPI):
         """Test that search works with a valid search term and returns populated data"""
         search_term = "python is good"
         
@@ -37,7 +37,7 @@ class TestYoutubeSearch:
         assert len(search_results) > 0, "Search results list should not be empty"
         assert search_results, "Search results list should be truthy (not empty)"
 
-    def test_search_result_item_structure(self, youtube_api):
+    def test_search_result_item_structure(self, youtube_api: YoutubeAPI):
         """Test that each search result item has the required keys"""
         search_term = "python is good"
         
@@ -59,7 +59,7 @@ class TestYoutubeSearch:
         assert all('title' in item for item in search_results), "All search result items should contain 'title' key"
 
 
-    def test_search_large_n_videos(self, youtube_api):
+    def test_search_large_n_videos(self, youtube_api: YoutubeAPI):
         """Test that search works with a large n_videos count and returns exactly that many videos"""
         search_term = "python is good"
         n_videos = 167
@@ -90,7 +90,7 @@ class TestYoutubeSearch:
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-    def test_search_with_sorting(self, youtube_api):
+    def test_search_with_sorting(self, youtube_api: YoutubeAPI):
         """Test that search works with sorting parameter (upload_date)"""
         search_term = "python is good"
         sort_by = "upload_date"
@@ -117,7 +117,7 @@ class TestYoutubeSearch:
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-    def test_search_with_sorting_large_n_videos(self, youtube_api):
+    def test_search_with_sorting_large_n_videos(self, youtube_api: YoutubeAPI):
         """Test that search works with sorting parameter and large n_videos count"""
         search_term = "python is good"
         sort_by = "upload_date"
@@ -147,7 +147,7 @@ class TestYoutubeSearch:
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-    def test_search_with_upload_date_filter(self, youtube_api):
+    def test_search_with_upload_date_filter(self, youtube_api: YoutubeAPI):
         """Test that search works with upload_date filter (last_hour)"""
         search_term = "python is good"
         upload_date = "today"
@@ -175,7 +175,7 @@ class TestYoutubeSearch:
             assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-    def test_search_with_duration_filter(self, youtube_api):
+    def test_search_with_duration_filter(self, youtube_api: YoutubeAPI):
         """Test that search works with duration filter (under_4_minutes)"""
         search_term = "python is good"
         duration = "under_4_minutes"
@@ -202,7 +202,7 @@ class TestYoutubeSearch:
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-    def test_search_with_features_filter(self, youtube_api):
+    def test_search_with_features_filter(self, youtube_api: YoutubeAPI):
         """Test that search works with features filter (hd)"""
         search_term = "python is good"
         features = "hd"
@@ -229,7 +229,7 @@ class TestYoutubeSearch:
         assert all('title' in video for video in search_results), "All search result items should contain 'title' key"
 
 
-    def test_search_with_three_filters_combination(self, youtube_api):
+    def test_search_with_three_filters_combination(self, youtube_api: YoutubeAPI):
         """Test that search works with four filters combined (duration + features + upload_date)"""
         search_term = "python tutorial"
         duration = "4_20_minutes"

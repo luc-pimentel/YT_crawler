@@ -27,7 +27,7 @@ class TestYoutubeNews:
         assert 'contents' in item, f"Each trending news item should have a 'contents' key{context}"
         
 
-    def test_get_trending_news_success(self, youtube_api):
+    def test_get_trending_news_success(self, youtube_api: YoutubeAPI):
         """Test that get_trending_news works and returns populated data with correct structure"""
         
         # Call the function - this should not raise any exceptions
@@ -51,7 +51,7 @@ class TestYoutubeNews:
         for i, item in enumerate(trending_news):
             self._validate_trending_news_item_structure(item, f" (item {i})")
 
-    def test_get_trending_news_all_categories(self, youtube_api):
+    def test_get_trending_news_all_categories(self, youtube_api: YoutubeAPI):
         """Test that get_trending_news works for all available categories with correct item structure"""
         
         for category in categories_dict.keys():
@@ -78,7 +78,7 @@ class TestYoutubeNews:
             
             time.sleep(2)
 
-    def test_trending_news_item_structure_detailed(self, youtube_api):
+    def test_trending_news_item_structure_detailed(self, youtube_api: YoutubeAPI):
         """Dedicated test for validating the detailed structure of trending news items"""
         
         # Get trending news for default category

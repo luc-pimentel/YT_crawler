@@ -12,11 +12,11 @@ class TestYoutubeAPI:
     """Simple tests to verify YoutubeAPI functions are working"""
     
     @pytest.fixture
-    def youtube_api(self):
+    def youtube_api(self) -> YoutubeAPI:
         """Create a YoutubeAPI instance for testing"""
         return YoutubeAPI()
 
-    def test_get_trending_videos_success(self, youtube_api):
+    def test_get_trending_videos_success(self, youtube_api: YoutubeAPI):
         """Test that get_trending_videos works and returns populated data"""
         
         # Call the function - this should not raise any exceptions
@@ -38,7 +38,7 @@ class TestYoutubeAPI:
 
 
     @pytest.mark.parametrize("category", ['now', 'music', 'gaming', 'movies'])
-    def test_get_trending_videos_all_categories(self, youtube_api, category):
+    def test_get_trending_videos_all_categories(self, youtube_api: YoutubeAPI, category: str):
         """Test that get_trending_videos works for all categories and returns properly structured data"""
         
         # Define required keys that each video item should contain

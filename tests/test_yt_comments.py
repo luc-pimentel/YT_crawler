@@ -13,12 +13,12 @@ class TestYoutubeAPIComments:
     """Tests for YouTube comments functionality"""
     
     @pytest.fixture
-    def youtube_api(self):
+    def youtube_api(self) -> YoutubeAPI:
         """Create a YoutubeAPI instance for testing"""
         return YoutubeAPI()
 
 
-    def test_get_video_comments_success(self, youtube_api):
+    def test_get_video_comments_success(self, youtube_api: YoutubeAPI):
         """Test that get_video_comments works with a valid video ID and returns populated data"""
         video_id = "lH3ox-mE1xY"
         
@@ -39,7 +39,7 @@ class TestYoutubeAPIComments:
         assert len(comments) > 0, "Comments list should not be empty"
         assert comments, "Comments list should be truthy (not empty)"
 
-    def test_get_video_comments_with_limit(self, youtube_api):
+    def test_get_video_comments_with_limit(self, youtube_api: YoutubeAPI):
         """Test that get_video_comments respects the n_comments limit"""
         video_id = "v9ZApdKADxs"
         n_comments = 20
@@ -64,7 +64,7 @@ class TestYoutubeAPIComments:
         assert all(comment is not None for comment in comments), "All comments should be non-None"
 
 
-    def test_get_video_comments_with_none_limit(self, youtube_api):
+    def test_get_video_comments_with_none_limit(self, youtube_api: YoutubeAPI):
         """Test that get_video_comments with n_comments=None returns all comments (same as no parameter)"""
         video_id = "v9ZApdKADxs"
         
@@ -90,7 +90,7 @@ class TestYoutubeAPIComments:
             f"Should return more than 20 comments when fetching all, got {len(comments_with_none)}"
 
 
-    def test_fetch_bulk_comments_structure_validation(self, youtube_api):
+    def test_fetch_bulk_comments_structure_validation(self, youtube_api: YoutubeAPI):
         """Test that get_video_comments returns 200 comments with correct structure for specific video"""
         video_id = "KTzcJgRxfiY"
         n_comments = 229
@@ -124,7 +124,7 @@ class TestYoutubeAPIComments:
         assert all(comment is not None for comment in comments), "All comments should be non-None"
 
 
-    def test_get_video_comments_sort_by_top_comments(self, youtube_api):
+    def test_get_video_comments_sort_by_top_comments(self, youtube_api: YoutubeAPI):
         """Test that get_video_comments works with sort_by='top_comments'"""
         video_id = "lH3ox-mE1xY"
         expected_keys = ['key', 'properties', 'author', 'toolbar', 'avatar']
@@ -158,7 +158,7 @@ class TestYoutubeAPIComments:
         assert all(comment is not None for comment in comments), "All comments should be non-None"
         assert all(comment for comment in comments), "All comments should be non-empty"
 
-    def test_get_video_comments_sort_by_newest(self, youtube_api):
+    def test_get_video_comments_sort_by_newest(self, youtube_api: YoutubeAPI):
         """Test that get_video_comments works with sort_by='newest'"""
         video_id = "v9ZApdKADxs"
         expected_keys = ['key', 'properties', 'author', 'toolbar', 'avatar']
@@ -192,7 +192,7 @@ class TestYoutubeAPIComments:
         assert all(comment is not None for comment in comments), "All comments should be non-None"
         assert all(comment for comment in comments), "All comments should be non-empty"
 
-    def test_get_video_comments_sort_by_with_limit(self, youtube_api):
+    def test_get_video_comments_sort_by_with_limit(self, youtube_api: YoutubeAPI):
         """Test that get_video_comments works with sort_by parameter combined with n_comments limit"""
         video_id = "KTzcJgRxfiY"
         n_comments = 15
@@ -237,7 +237,7 @@ class TestYoutubeAPIComments:
         assert all(comment for comment in comments_newest), "All newest comments should be non-empty"
 
 
-    def test_get_video_comment_threads_comprehensive(self, youtube_api):
+    def test_get_video_comment_threads_comprehensive(self, youtube_api: YoutubeAPI):
         """Comprehensive test for get_video_comment_threads functionality and structure"""
         video_id = "AqBOdq_mkPE"
         expected_thread_keys = ['root_comment_id', 'sub_comments']
@@ -297,7 +297,7 @@ class TestYoutubeAPIComments:
 
 
 
-    def test_get_video_comment_threads_with_specific_comment_id(self, youtube_api):
+    def test_get_video_comment_threads_with_specific_comment_id(self, youtube_api: YoutubeAPI):
         """Test get_video_comment_threads with a specific comment ID"""
         video_id = "AqBOdq_mkPE"
         comment_ids = ['UgyVY9GfRbe2hKgXmDJ4AaABAg']
@@ -346,7 +346,7 @@ class TestYoutubeAPIComments:
                 assert sub_comment.get('key') is not None, "sub-comment key should not be None"
 
 
-    def test_get_video_comment_threads_comprehensive_with_random_filtering(self, youtube_api):
+    def test_get_video_comment_threads_comprehensive_with_random_filtering(self, youtube_api: YoutubeAPI):
         """Comprehensive test for get_video_comment_threads with random comment ID filtering"""
         video_id = "AqBOdq_mkPE"
         expected_thread_keys = ['root_comment_id', 'sub_comments']
