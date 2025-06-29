@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import json
 import re
+import warnings
 from .config import HEADERS
 from typing import Any
 
@@ -41,7 +42,17 @@ def extract_youtube_initial_data(url: str, variable_name: str = 'ytInitialData',
         
     Raises:
         Exception: If the variable is not found or JSON parsing fails
+        
+    .. deprecated:: 
+        This function is deprecated and will be removed in a future version.
+        Use extract_youtube_page_scripts() with extract_json_from_scripts() instead.
     """
+    warnings.warn(
+        "extract_youtube_initial_data is deprecated and will be removed in a future version. "
+        "Use extract_youtube_page_scripts() with extract_json_from_scripts() instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
     
     # Get the webpage content
     response = requests.get(url, headers=headers, json=payload)
@@ -169,3 +180,122 @@ def fetch_youtube_continuation_data(continuation_token: str, click_tracking_para
         return response.json()
     else:
         raise Exception(f"Failed to fetch comments: HTTP {response.status_code}")
+    
+
+
+def extract_youtube_page_scripts(url: str, headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> list[BeautifulSoup]:
+    """
+    Extract YouTube initial data from a given URL.
+    
+    Args:
+        url (str): YouTube URL to scrape
+        variable_name (str): JavaScript variable name to extract ('ytInitialData' or 'ytInitialPlayerResponse')
+        headers (dict, optional): Custom headers for the request
+        
+    Returns:
+        dict: Parsed JSON data from the JavaScript variable
+        
+    Raises:
+        Exception: If the variable is not found or JSON parsing fails
+    """
+    
+    # Get the webpage content
+    response = requests.get(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    # Parse with BeautifulSoup
+    soup = BeautifulSoup(response.text, "html.parser")
+    
+    # Find all script tags
+    scripts = soup.find_all('script')
+
+    return scripts
+
+
+def grab_dict_by_key(result_set: list[BeautifulSoup], target_key: str) -> dict | None:
+    """
+    Search through a ResultSet of BS4 tags for JSON data containing a specific key.
+    Uses regex to extract JSON from JavaScript code before parsing.
+    Returns the entire dictionary containing the first exact match found.
+    
+    Args:
+        result_set: bs4.element.ResultSet containing Tag objects
+        target_key: str - The exact key to search for (case-sensitive)
+    
+    Returns:
+        dict: The entire dictionary containing the matching key, or None if not found
+    """
+    import json
+    import re
+    
+    def extract_json_from_js(text):
+        """Extract JSON objects from JavaScript code using multiple strategies."""
+        json_candidates = []
+        
+        # Strategy 1: Look for variable assignments like "var name = {}" or "window.name = {}"
+        assignment_pattern = r'(?:var\s+\w+|window\.\w+|\w+)\s*=\s*(\{.*?\});?'
+        matches = re.findall(assignment_pattern, text, re.DOTALL)
+        json_candidates.extend(matches)
+        
+        # Strategy 2: Look for standalone JSON objects (between braces)
+        brace_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+        matches = re.findall(brace_pattern, text, re.DOTALL)
+        json_candidates.extend(matches)
+        
+        # Strategy 3: More aggressive - find anything that looks like JSON with nested braces
+        def find_balanced_braces(text):
+            results = []
+            i = 0
+            while i < len(text):
+                if text[i] == '{':
+                    brace_count = 1
+                    start = i
+                    i += 1
+                    while i < len(text) and brace_count > 0:
+                        if text[i] == '{':
+                            brace_count += 1
+                        elif text[i] == '}':
+                            brace_count -= 1
+                        i += 1
+                    if brace_count == 0:
+                        results.append(text[start:i])
+                else:
+                    i += 1
+            return results
+        
+        balanced_matches = find_balanced_braces(text)
+        json_candidates.extend(balanced_matches)
+        
+        return json_candidates
+    
+    for tag in result_set:
+        try:
+            # Extract text content from the tag
+            tag_text = tag.get_text()
+            
+            # Extract potential JSON objects from JavaScript
+            json_candidates = extract_json_from_js(tag_text)
+            
+            # Try to parse each candidate as JSON
+            for candidate in json_candidates:
+                try:
+                    # Clean up the candidate (remove trailing semicolons, etc.)
+                    cleaned_candidate = candidate.rstrip(';').strip()
+                    
+                    # Try to parse as JSON
+                    data = json.loads(cleaned_candidate)
+                    
+                    # Check if the target key exists in this dictionary
+                    if isinstance(data, dict) and target_key in data:
+                        return data
+                        
+                except json.JSONDecodeError:
+                    # This candidate wasn't valid JSON, continue to next
+                    continue
+                    
+        except AttributeError:
+            # Skip tags that don't have text content
+            continue
+    
+    # Return None if no match found
+    return None
