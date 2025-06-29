@@ -88,9 +88,10 @@ class TestExtractYoutubePageScripts:
     def test_extract_youtube_page_scripts_with_headers(self):
         """Test extracting YouTube page scripts with headers"""
         video_id = "nUgGY18iTJw"
+        url = f"https://www.youtube.com/watch?v={video_id}"
         
         # Call the function with headers
-        result = extract_youtube_page_scripts(video_id, headers=HEADERS)
+        result = extract_youtube_page_scripts(url, headers=HEADERS)
         
         # Verify the result is a list
         assert isinstance(result, list), "Result should be a list"
@@ -107,9 +108,10 @@ class TestExtractYoutubePageScripts:
     def test_extract_youtube_page_scripts_without_headers(self):
         """Test extracting YouTube page scripts without headers"""
         video_id = "nUgGY18iTJw"
+        url = f"https://www.youtube.com/watch?v={video_id}"
         
         # Call the function without headers (default None)
-        result = extract_youtube_page_scripts(video_id)
+        result = extract_youtube_page_scripts(url)
         
         # Verify the result is a list
         assert isinstance(result, list), "Result should be a list"
@@ -130,9 +132,10 @@ class TestGrabDictByKey:
     def test_grab_dict_by_key_with_headers(self):
         """Test grabbing dictionary by key with headers"""
         video_id = "nUgGY18iTJw"
+        url = f"https://www.youtube.com/watch?v={video_id}"
         
         # First get the scripts using extract_youtube_page_scripts
-        scripts = extract_youtube_page_scripts(video_id, headers=HEADERS)
+        scripts = extract_youtube_page_scripts(url, headers=HEADERS)
         
         # Then use grab_dict_by_key to find videoDetails
         result = grab_dict_by_key(scripts, 'videoDetails')
@@ -149,9 +152,10 @@ class TestGrabDictByKey:
     def test_grab_dict_by_key_without_headers(self):
         """Test grabbing dictionary by key without headers"""
         video_id = "nUgGY18iTJw"
+        url = f"https://www.youtube.com/watch?v={video_id}"
         
         # First get the scripts using extract_youtube_page_scripts
-        scripts = extract_youtube_page_scripts(video_id)
+        scripts = extract_youtube_page_scripts(url)
         
         # Then use grab_dict_by_key to find videoDetails
         result = grab_dict_by_key(scripts, 'videoDetails')

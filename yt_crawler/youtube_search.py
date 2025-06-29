@@ -193,13 +193,18 @@ class SearchMixin:
         
         # Use the updated _get_search_url method to construct the URL with all filters
         url = self._get_search_url(search_term, upload_date, duration, features, sort_by)
-        raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
-        if not raw_search_json:
-            raise Exception("Could not find initial data response JSON")
-        
+        scripts = extract_youtube_page_scripts(url)
+        section_list_renderer = grab_dict_by_key(scripts, 'sectionListRenderer')
+        if not section_list_renderer:
+            raise Exception("Could not find sectionListRenderer")
+
+
         try:
-            search_contents = raw_search_json.get('contents', {}).get('twoColumnSearchResultsRenderer', {}).get('primaryContents', {}).get('sectionListRenderer', {}).get('contents', [])
+            search_contents = section_list_renderer.get('sectionListRenderer', {}).get('contents', [])
+
             item_section_renderer_contents = search_contents[0].get('itemSectionRenderer').get('contents')
+            if not item_section_renderer_contents:
+                raise Exception("Could not find itemSectionRenderer contents")
             videos = [video.get('videoRenderer') for video in item_section_renderer_contents if video.get('videoRenderer')]
         except (AttributeError, IndexError, TypeError):
             raise Exception("Could not parse search results")

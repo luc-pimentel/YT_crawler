@@ -183,7 +183,7 @@ def fetch_youtube_continuation_data(continuation_token: str, click_tracking_para
     
 
 
-def extract_youtube_page_scripts(video_id: str, headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> list[BeautifulSoup]:
+def extract_youtube_page_scripts(url: str, headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> list[BeautifulSoup]:
     """
     Extract YouTube initial data from a given URL.
     
@@ -198,7 +198,6 @@ def extract_youtube_page_scripts(video_id: str, headers: dict[str, str] | None =
     Raises:
         Exception: If the variable is not found or JSON parsing fails
     """
-    url: str = f"https://www.youtube.com/watch?v={video_id}"
 
     # Get the webpage content
     response = requests.get(url, headers=headers, json=payload)
@@ -233,46 +232,85 @@ def grab_dict_by_key(result_set: list[BeautifulSoup], target_key: str) -> dict |
         """Extract JSON objects from JavaScript code using multiple strategies."""
         json_candidates = []
         
-        # Strategy 1: Look for variable assignments like "var name = {}" or "window.name = {}"
-        assignment_pattern = r'(?:var\s+\w+|window\.\w+|\w+)\s*=\s*(\{.*?\});?'
-        matches = re.findall(assignment_pattern, text, re.DOTALL)
-        json_candidates.extend(matches)
+        # Strategy 1: Look for variable assignments (more flexible pattern)
+        assignment_patterns = [
+            r'(?:var\s+\w+|window\.\w+|\w+)\s*=\s*(\{.*?\});?',
+            r'(?:var\s+\w+|window\.\w+|\w+)\s*=\s*(\{.*?)(?=;|\n|$)',
+            r'(?:var\s+\w+|window\.\w+|\w+)\s*=\s*(\{.*?)(?=\s*(?:var|window|function|\}|\)|$))',
+        ]
         
-        # Strategy 2: Look for standalone JSON objects (between braces)
-        brace_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
-        matches = re.findall(brace_pattern, text, re.DOTALL)
-        json_candidates.extend(matches)
+        for pattern in assignment_patterns:
+            matches = re.findall(pattern, text, re.DOTALL | re.MULTILINE)
+            json_candidates.extend(matches)
         
-        # Strategy 3: More aggressive - find anything that looks like JSON with nested braces
-        def find_balanced_braces(text):
+        # Strategy 2: Look for standalone JSON objects with better nested brace handling
+        def find_balanced_json_objects(text):
             results = []
             i = 0
             while i < len(text):
                 if text[i] == '{':
                     brace_count = 1
+                    quote_count = 0
+                    in_string = False
+                    escape_next = False
                     start = i
                     i += 1
+                    
                     while i < len(text) and brace_count > 0:
-                        if text[i] == '{':
-                            brace_count += 1
-                        elif text[i] == '}':
-                            brace_count -= 1
+                        char = text[i]
+                        
+                        if escape_next:
+                            escape_next = False
+                        elif char == '\\':
+                            escape_next = True
+                        elif char == '"' and not escape_next:
+                            in_string = not in_string
+                        elif not in_string:
+                            if char == '{':
+                                brace_count += 1
+                            elif char == '}':
+                                brace_count -= 1
+                        
                         i += 1
+                    
                     if brace_count == 0:
-                        results.append(text[start:i])
+                        candidate = text[start:i]
+                        # Only add if it looks like it could contain meaningful data
+                        if len(candidate) > 10 and '"' in candidate:
+                            results.append(candidate)
                 else:
                     i += 1
             return results
         
-        balanced_matches = find_balanced_braces(text)
+        balanced_matches = find_balanced_json_objects(text)
         json_candidates.extend(balanced_matches)
         
         return json_candidates
     
+    def find_key_in_dict(data, target_key):
+        """Recursively search for a key in nested dictionaries/lists"""
+        if isinstance(data, dict):
+            if target_key in data:
+                return data
+            for value in data.values():
+                result = find_key_in_dict(value, target_key)
+                if result is not None:
+                    return result
+        elif isinstance(data, list):
+            for item in data:
+                result = find_key_in_dict(item, target_key)
+                if result is not None:
+                    return result
+        return None
+    
     for tag in result_set:
         try:
             # Extract text content from the tag
-            tag_text = tag.get_text()
+            tag_text = tag.get_text() if hasattr(tag, 'get_text') else str(tag)
+            
+            # Skip very short content that's unlikely to contain JSON
+            if len(tag_text) < 50:
+                continue
             
             # Extract potential JSON objects from JavaScript
             json_candidates = extract_json_from_js(tag_text)
@@ -280,22 +318,27 @@ def grab_dict_by_key(result_set: list[BeautifulSoup], target_key: str) -> dict |
             # Try to parse each candidate as JSON
             for candidate in json_candidates:
                 try:
-                    # Clean up the candidate (remove trailing semicolons, etc.)
+                    # Clean up the candidate
                     cleaned_candidate = candidate.rstrip(';').strip()
+                    
+                    # Skip obviously invalid candidates
+                    if not cleaned_candidate.startswith('{') or not cleaned_candidate.endswith('}'):
+                        continue
                     
                     # Try to parse as JSON
                     data = json.loads(cleaned_candidate)
                     
-                    # Check if the target key exists in this dictionary
-                    if isinstance(data, dict) and target_key in data:
-                        return data
+                    # Search for the target key recursively
+                    result = find_key_in_dict(data, target_key)
+                    if result is not None:
+                        return result
                         
                 except json.JSONDecodeError:
                     # This candidate wasn't valid JSON, continue to next
                     continue
                     
-        except AttributeError:
-            # Skip tags that don't have text content
+        except (AttributeError, TypeError):
+            # Skip tags that don't have text content or other issues
             continue
     
     # Return None if no match found
