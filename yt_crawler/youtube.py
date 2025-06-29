@@ -18,27 +18,20 @@ class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, Trendin
         Returns:
             dict: Video details including title, description, view count etc.
         """
-        # Construct YouTube URL
-        youtube_url = f"https://www.youtube.com/watch?v={video_id}"
-        
         # Get the webpage content
-        initial_player_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialPlayerResponse')
-        if not initial_player_response_json:
-            raise Exception("Could not find initial player response JSON")
+        scripts = extract_youtube_page_scripts(video_id, headers=HEADERS)
         
-        # Extract both videoDetails and microformat
-        video_details_data = initial_player_response_json.get('videoDetails', {})
-        microformat_data = initial_player_response_json.get('microformat', {})
-
-        if not video_details_data :
+        video_details_dict = grab_dict_by_key(scripts, 'videoDetails')
+        if not video_details_dict:
             raise Exception("No video details found")
-        if not microformat_data:
-            raise Exception("No microformat data found")
+
+        video_details_key_data = video_details_dict.get('videoDetails')
+        microformat_key_data = video_details_dict.get('microformat')
 
         # Wrap both in video_details dictionary
         video_details = {
-            'videoDetails': video_details_data,
-            'microformat': microformat_data
+            'videoDetails': video_details_key_data,
+            'microformat': microformat_key_data
         }
         
         return video_details

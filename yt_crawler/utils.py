@@ -183,7 +183,7 @@ def fetch_youtube_continuation_data(continuation_token: str, click_tracking_para
     
 
 
-def extract_youtube_page_scripts(url: str, headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> list[BeautifulSoup]:
+def extract_youtube_page_scripts(video_id: str, headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> list[BeautifulSoup]:
     """
     Extract YouTube initial data from a given URL.
     
@@ -198,7 +198,8 @@ def extract_youtube_page_scripts(url: str, headers: dict[str, str] | None = None
     Raises:
         Exception: If the variable is not found or JSON parsing fails
     """
-    
+    url: str = f"https://www.youtube.com/watch?v={video_id}"
+
     # Get the webpage content
     response = requests.get(url, headers=headers, json=payload)
     response.raise_for_status()
