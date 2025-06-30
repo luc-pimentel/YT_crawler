@@ -1,5 +1,6 @@
 import requests
-from .utils import extract_youtube_initial_data, xml_transcript_to_json_bs4
+from .utils import xml_transcript_to_json_bs4, extract_youtube_page_scripts, grab_dict_by_key
+from .config import HEADERS
 from typing import Any
 
 class TranscriptMixin:
@@ -18,17 +19,19 @@ class TranscriptMixin:
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
         
         # Get the webpage content
-        initial_player_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialPlayerResponse')
-        if not initial_player_response_json:
-            raise Exception("Could not find initial player response JSON")
+        scripts = extract_youtube_page_scripts(youtube_url, headers=HEADERS)
+        caption_tracks_dict = grab_dict_by_key(scripts, 'captionTracks')
+
+        if not caption_tracks_dict:
+            raise Exception("Could not find caption tracks")
+        else:
+            caption_tracks: list[dict[str, Any]] = caption_tracks_dict.get('captionTracks', [])
+
+        base_url = next((item['baseUrl'] for item in caption_tracks if item.get('languageCode') == 'en'), None)
+        if not base_url:
+            raise Exception("Could not find base URL")
         
-        captions_element = initial_player_response_json.get('captions', {})
-
-        if not captions_element:
-            raise Exception("Video has no transcript available")
-
-        caption_url = captions_element.get('playerCaptionsTracklistRenderer', {}).get('captionTracks', [])[0].get('baseUrl')
-        caption_request = requests.get(caption_url)
+        caption_request = requests.get(base_url, headers=HEADERS)
         video_transcript = xml_transcript_to_json_bs4(caption_request.text)
-
-        return video_transcript 
+        
+        return video_transcript
