@@ -75,7 +75,11 @@ class CommentsMixin:
             data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/next?prettyPrint=false')
             
             try:
-                mutations_list = data.get('frameworkUpdates', {}).get('entityBatchUpdate', {}).get('mutations', [])
+                mutations_dict = find_nested_key(data, 'mutations')
+                if not mutations_dict:
+                    raise Exception("Could not find mutations")
+                
+                mutations_list = mutations_dict.get('mutations', [])
                 comments = [mutation.get('payload').get('commentEntityPayload') for mutation in mutations_list if 'commentEntityPayload' in mutation.get('payload').keys()]
                 all_comments.extend(comments)
             except (AttributeError, TypeError):
