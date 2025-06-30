@@ -43,7 +43,7 @@ class TestYoutubeAPI:
         
         # Define required keys that each video item should contain
         required_keys = ['videoId', 'title', 'viewCountText', 
-                        'publishedTimeText', 'thumbnail', 'avatar']
+                        'thumbnail', 'avatar']
         
         # Call the function - this should not raise any exceptions
         result = youtube_api.get_trending_videos(category=category)

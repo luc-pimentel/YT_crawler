@@ -29,33 +29,39 @@ class TrendingMixin:
         if category == 'now':
             # Use existing logic for 'now' category
             url = base_url + "/feed/trending"
-            raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
-            if not raw_search_json:
-                raise Exception("Could not find initial data response JSON")
-            content_tab_index = 0
+            scripts = extract_youtube_page_scripts(url, headers=HEADERS)
         else:
             # For other categories, first get the main trending page to extract category URL
             main_url = base_url + "/feed/trending"
-            main_json = extract_youtube_initial_data(main_url, 'ytInitialData')
-            if not main_json:
-                raise Exception("Could not find initial data response JSON")
+            scripts = extract_youtube_page_scripts(main_url, headers=HEADERS)
+            
             
             try:
-                tabs = main_json.get('contents', {}).get('twoColumnBrowseResultsRenderer', {}).get('tabs', [])
-                category_url = tabs[category_index].get('tabRenderer').get('endpoint').get('commandMetadata').get('webCommandMetadata').get('url')
+                tabs_dict = grab_dict_by_key(scripts, 'tabs')
+                if not tabs_dict:
+                    raise Exception('Trending tabs not found')
+                
+                tabs:list[dict[str, Any]] = tabs_dict.get('tabs', [])
+                category_url: str = tabs[category_index].get('tabRenderer', {}).get('endpoint', {}).get('commandMetadata', {}).get('webCommandMetadata', {}).get('url', '')
                 
                 # Make request to category-specific URL
                 url = base_url + category_url
-                raw_search_json = extract_youtube_initial_data(url, 'ytInitialData')
-                if not raw_search_json:
-                    raise Exception("Could not find initial data response JSON")
-                content_tab_index = category_index
+                scripts = extract_youtube_page_scripts(url, headers=HEADERS)
             except (AttributeError, IndexError, TypeError):
                 raise Exception(f"Could not extract URL for category '{category}'")
         
         try:
-            tabs = raw_search_json.get('contents', {}).get('twoColumnBrowseResultsRenderer', {}).get('tabs', [])
-            contents = tabs[content_tab_index].get('tabRenderer').get('content').get('sectionListRenderer').get('contents')
+            tabs_dict = grab_dict_by_key(scripts, 'tabs')
+            if not tabs_dict:
+                raise Exception('Trending tabs not found')
+            else:
+                tabs:list[dict[str, Any]] = tabs_dict.get('tabs', [])
+
+            contents_dict = find_nested_key(tabs[category_index], 'contents')
+            if not contents_dict:
+                raise Exception('Contents not found')
+            else:
+                contents: list = contents_dict.get('contents', [])
         except (AttributeError, IndexError, TypeError):
             raise Exception(f"Could not parse trending videos structure for category '{category}'")
         
