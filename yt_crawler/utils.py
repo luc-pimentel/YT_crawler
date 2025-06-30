@@ -28,59 +28,6 @@ def xml_transcript_to_json_bs4(xml_string: str) -> dict[str, Any]:
     return transcript_data
 
 
-def extract_youtube_initial_data(url: str, variable_name: str = 'ytInitialData', headers: dict[str, str] | None = None, payload: dict[str, Any] | None = None) -> dict[str, Any] | None:
-    """
-    Extract YouTube initial data from a given URL.
-    
-    Args:
-        url (str): YouTube URL to scrape
-        variable_name (str): JavaScript variable name to extract ('ytInitialData' or 'ytInitialPlayerResponse')
-        headers (dict, optional): Custom headers for the request
-        
-    Returns:
-        dict: Parsed JSON data from the JavaScript variable
-        
-    Raises:
-        Exception: If the variable is not found or JSON parsing fails
-        
-    .. deprecated:: 
-        This function is deprecated and will be removed in a future version.
-        Use extract_youtube_page_scripts() with extract_json_from_scripts() instead.
-    """
-    warnings.warn(
-        "extract_youtube_initial_data is deprecated and will be removed in a future version. "
-        "Use extract_youtube_page_scripts() with extract_json_from_scripts() instead.",
-        DeprecationWarning,
-        stacklevel=2
-    )
-    
-    # Get the webpage content
-    response = requests.get(url, headers=headers, json=payload)
-    response.raise_for_status()
-    
-    # Parse with BeautifulSoup
-    soup = BeautifulSoup(response.text, "html.parser")
-    
-    # Find all script tags
-    scripts = soup.find_all('script')
-    # Find the script text containing the target variable
-    script_text = next(
-        (script.text.split(f'var {variable_name} = ')[1][:-1]
-         for script in scripts 
-         if script.string and f'var {variable_name} = ' in script.string),
-        None
-    )
-    
-    if not script_text:
-        raise Exception(f"Could not find {variable_name} in page source")
-    
-    try:
-        # Parse the JSON from the script text
-        return json.loads(script_text)
-    except json.JSONDecodeError as e:
-        raise Exception(f"Failed to parse {variable_name} JSON: {str(e)}")
-    
-
 def find_nested_key(obj: dict[str, Any] | list[Any] | Any, target_key: str) -> dict[str, Any] | None:
     """
     Recursively search for a key in nested dictionaries/lists
