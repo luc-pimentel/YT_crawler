@@ -1,7 +1,6 @@
 import requests
-from .utils import *
-from .utils import extract_json_from_scripts
-
+from .utils import extract_json_from_scripts, extract_youtube_page_scripts, grab_dict_by_key, find_nested_key, fetch_youtube_continuation_data
+from typing import Any
 
 SEARCH_FILTER_DICT: dict[str, Any] = {
     'upload_date': {
@@ -220,17 +219,24 @@ class SearchMixin:
         while len(all_videos) < n_videos and continuation_token:
             try:
                 continuation_data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/search')
+
+                continuation_items_dict = find_nested_key(continuation_data, 'continuationItems')
+                if not continuation_items_dict:
+                    raise Exception("Could not find continuation items")
+                else:
+                    continuation_items: list[dict[str, Any]] = continuation_items_dict.get('continuationItems', [])
                 
-                continuation_items = continuation_data.get('onResponseReceivedCommands', [])[0].get('appendContinuationItemsAction', {}).get('continuationItems', [])
+                next_set_of_videos: list[dict[str, Any]] = continuation_items[0].get('itemSectionRenderer', {}).get('contents', [])
+                if not next_set_of_videos:
+                    raise Exception("Could not find next set of videos")
                 
-                next_set_of_videos = continuation_items[0].get('itemSectionRenderer').get('contents')
                 next_videos = [video.get('videoRenderer') for video in next_set_of_videos if video.get('videoRenderer')]
                 
                 all_videos.extend(next_videos)
                 
                 # Update continuation token for next iteration
-                continuation_token = continuation_items[1].get('continuationItemRenderer').get('continuationEndpoint').get('continuationCommand').get('token')
-                click_tracking_params = continuation_items[1].get('continuationItemRenderer').get('continuationEndpoint').get('clickTrackingParams')
+                continuation_token:str = continuation_items[1].get('continuationItemRenderer', {}).get('continuationEndpoint', {}).get('continuationCommand', {}).get('token', '')
+                click_tracking_params:str = continuation_items[1].get('continuationItemRenderer', {}).get('continuationEndpoint', {}).get('clickTrackingParams', '')
                 
             except (AttributeError, IndexError, TypeError, KeyError):
                 # No more continuation data available
