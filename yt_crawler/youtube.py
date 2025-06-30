@@ -19,7 +19,8 @@ class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, Trendin
             dict: Video details including title, description, view count etc.
         """
         # Get the webpage content
-        scripts = extract_youtube_page_scripts(video_id, headers=HEADERS)
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        scripts = extract_youtube_page_scripts(url, headers=HEADERS)
         
         video_details_dict = grab_dict_by_key(scripts, 'videoDetails')
         if not video_details_dict:
