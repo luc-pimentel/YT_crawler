@@ -106,19 +106,17 @@ class CommentsMixin:
 
 
 
-    def get_video_comment_threads(self, video_id:str, comment_ids:list[str] = [], max_depth:int = 20) -> dict[str, Any]:
-        ## TODO: Add max depth logic and implement while loop to fetch more than the first set of comments
-
+    def get_video_comment_threads(self, video_id:str, comment_ids:list[str] = []) -> dict[str, Any]:
 
         comment_replies: list[dict[str, Any]] = []
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
-        initial_data_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialData')
-        if not initial_data_response_json:
-            raise Exception("Could not find initial data response JSON")
+        scripts = extract_youtube_page_scripts(youtube_url)
+        sub_menu_items_dict = grab_dict_by_key(scripts, 'subMenuItems')
+        if not sub_menu_items_dict:
+            raise Exception("Could not find sub menu items")
 
         try:
-            comments_section_header = initial_data_response_json.get('engagementPanels', [])[0].get('engagementPanelSectionListRenderer').get('header')
-            selected_comment_type = comments_section_header.get('engagementPanelTitleHeaderRenderer').get('menu').get('sortFilterSubMenuRenderer').get('subMenuItems')[1]
+            selected_comment_type = sub_menu_items_dict.get('subMenuItems', [])[1]
             click_tracking_params = selected_comment_type.get('serviceEndpoint').get('clickTrackingParams')
             continuation_token = selected_comment_type.get('serviceEndpoint').get('continuationCommand').get('token')
         except (AttributeError, IndexError, TypeError):
