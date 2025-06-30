@@ -56,16 +56,17 @@ class CommentsMixin:
             raise ValueError(f"Invalid sorting option. Must be one of: {list(comments_dict.keys())}")
         
         youtube_url = f"https://www.youtube.com/watch?v={video_id}"
-        initial_data_response_json = extract_youtube_initial_data(youtube_url, 'ytInitialData')
-        if not initial_data_response_json:
-            raise Exception("Could not find initial data response JSON")
+        scripts = extract_youtube_page_scripts(youtube_url)
 
+        sub_menu_items_dict = grab_dict_by_key(scripts, 'subMenuItems')
+        if not sub_menu_items_dict:
+            raise Exception("Could not find sub menu items")
+        
         try:
-            comments_section_header = initial_data_response_json.get('engagementPanels', [])[0].get('engagementPanelSectionListRenderer').get('header')
-            selected_comment_type = comments_section_header.get('engagementPanelTitleHeaderRenderer').get('menu').get('sortFilterSubMenuRenderer').get('subMenuItems')[comments_dict[sort_by]]
+            selected_comment_type = sub_menu_items_dict.get('subMenuItems', [])[comments_dict[sort_by]]
             click_tracking_params = selected_comment_type.get('serviceEndpoint').get('clickTrackingParams')
             continuation_token = selected_comment_type.get('serviceEndpoint').get('continuationCommand').get('token')
-        except (AttributeError, IndexError, TypeError):
+        except:
             raise Exception("Could not find comment continuation data")
 
         all_comments: list[dict[str, Any]] = []

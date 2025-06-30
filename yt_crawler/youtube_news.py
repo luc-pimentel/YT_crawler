@@ -46,7 +46,7 @@ class NewsMixin:
             if not tab_contents_dict:
                 raise Exception('Tab contents not found')
 
-            tab_contents: list[dict[str, Any]] = tab_contents_dict.get('contents', [])
+            tab_contents = tab_contents_dict.get('contents', [])
             trending_sections = [tab_content.get('richSectionRenderer', {}).get('content', {}).get('richShelfRenderer', {}) for tab_content in tab_contents]
         except (AttributeError, IndexError, TypeError):
             raise Exception("Could not parse trending news structure")
