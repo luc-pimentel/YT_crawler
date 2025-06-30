@@ -34,15 +34,20 @@ class NewsMixin:
             raise ValueError(f"Invalid category: {category}. Valid categories are: {list(categories_dict.keys())}")
         
         url = f"https://www.youtube.com/feed/news_destination/{category}"
-        initial_data_response_json = extract_youtube_initial_data(url, 'ytInitialData')
-        if not initial_data_response_json:
-            raise Exception("Could not find initial data response JSON")
-        #return initial_data_response_json
+        scripts = extract_youtube_page_scripts(url, headers=HEADERS)
         
         try:
-            tabs = initial_data_response_json.get('contents', {}).get('twoColumnBrowseResultsRenderer', {}).get('tabs', [])
-            tab_contents = tabs[categories_dict[category]].get('tabRenderer').get('content').get('richGridRenderer').get('contents')
-            trending_sections = [tab_content.get('richSectionRenderer').get('content').get('richShelfRenderer') for tab_content in tab_contents]
+            tabs_dict = grab_dict_by_key(scripts, 'tabs')
+            if not tabs_dict:
+                raise Exception('Tabs not found')
+            
+            tabs: list[dict[str, Any]] = tabs_dict.get('tabs', [])
+            tab_contents_dict = find_nested_key(tabs[categories_dict[category]], 'contents')
+            if not tab_contents_dict:
+                raise Exception('Tab contents not found')
+
+            tab_contents: list[dict[str, Any]] = tab_contents_dict.get('contents', [])
+            trending_sections = [tab_content.get('richSectionRenderer', {}).get('content', {}).get('richShelfRenderer', {}) for tab_content in tab_contents]
         except (AttributeError, IndexError, TypeError):
             raise Exception("Could not parse trending news structure")
         
