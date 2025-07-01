@@ -25,7 +25,7 @@ class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, Trendin
         video_details_dict = grab_dict_by_key(scripts, 'videoDetails')
         if not video_details_dict:
             raise Exception("No video details found")
-
+        
         video_details_key_data = video_details_dict.get('videoDetails')
         microformat_key_data = video_details_dict.get('microformat')
 
