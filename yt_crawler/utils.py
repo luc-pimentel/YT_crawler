@@ -161,78 +161,9 @@ def extract_youtube_page_scripts(url: str, headers: dict[str, str] | None = None
 
 def grab_dict_by_key(result_set: list[BeautifulSoup], target_key: str) -> dict | None:
     """
-    Search through a ResultSet of BS4 tags for JSON data containing a specific key.
-    Uses regex to extract JSON from JavaScript code before parsing.
-    Returns the entire dictionary containing the first exact match found.
-    
-    Args:
-        result_set: bs4.element.ResultSet containing Tag objects
-        target_key: str - The exact key to search for (case-sensitive)
-    
-    Returns:
-        dict: The entire dictionary containing the matching key, or None if not found
+    Ultra-fast search using string operations only, avoiding regex entirely.
     """
     import json
-    import re
-    
-    def extract_json_from_js(text):
-        """Extract JSON objects from JavaScript code using multiple strategies."""
-        json_candidates = []
-        
-        # Strategy 1: Look for variable assignments (more flexible pattern)
-        assignment_patterns = [
-            r'(?:var\s+\w+|window\.\w+|\w+)\s*=\s*(\{.*?\});?',
-            r'(?:var\s+\w+|window\.\w+|\w+)\s*=\s*(\{.*?)(?=;|\n|$)',
-            r'(?:var\s+\w+|window\.\w+|\w+)\s*=\s*(\{.*?)(?=\s*(?:var|window|function|\}|\)|$))',
-        ]
-        
-        for pattern in assignment_patterns:
-            matches = re.findall(pattern, text, re.DOTALL | re.MULTILINE)
-            json_candidates.extend(matches)
-        
-        # Strategy 2: Look for standalone JSON objects with better nested brace handling
-        def find_balanced_json_objects(text):
-            results = []
-            i = 0
-            while i < len(text):
-                if text[i] == '{':
-                    brace_count = 1
-                    quote_count = 0
-                    in_string = False
-                    escape_next = False
-                    start = i
-                    i += 1
-                    
-                    while i < len(text) and brace_count > 0:
-                        char = text[i]
-                        
-                        if escape_next:
-                            escape_next = False
-                        elif char == '\\':
-                            escape_next = True
-                        elif char == '"' and not escape_next:
-                            in_string = not in_string
-                        elif not in_string:
-                            if char == '{':
-                                brace_count += 1
-                            elif char == '}':
-                                brace_count -= 1
-                        
-                        i += 1
-                    
-                    if brace_count == 0:
-                        candidate = text[start:i]
-                        # Only add if it looks like it could contain meaningful data
-                        if len(candidate) > 10 and '"' in candidate:
-                            results.append(candidate)
-                else:
-                    i += 1
-            return results
-        
-        balanced_matches = find_balanced_json_objects(text)
-        json_candidates.extend(balanced_matches)
-        
-        return json_candidates
     
     def find_key_in_dict(data, target_key):
         """Recursively search for a key in nested dictionaries/lists"""
@@ -250,43 +181,89 @@ def grab_dict_by_key(result_set: list[BeautifulSoup], target_key: str) -> dict |
                     return result
         return None
     
-    for tag in result_set:
-        try:
-            # Extract text content from the tag
-            tag_text = tag.get_text() if hasattr(tag, 'get_text') else str(tag)
+    def find_json_with_key(text, target_key):
+        """Find JSON objects containing the target key using string operations"""
+        search_pattern = f'"{target_key}"'
+        candidates = []
+        
+        # Find all occurrences of the key
+        pos = 0
+        while True:
+            key_pos = text.find(search_pattern, pos)
+            if key_pos == -1:
+                break
             
-            # Skip very short content that's unlikely to contain JSON
-            if len(tag_text) < 50:
+            # Find the start of the JSON object (nearest { before the key)
+            json_start = key_pos
+            brace_count = 0
+            while json_start >= 0:
+                if text[json_start] == '}':
+                    brace_count += 1
+                elif text[json_start] == '{':
+                    if brace_count == 0:
+                        break
+                    brace_count -= 1
+                json_start -= 1
+            
+            if json_start < 0:
+                pos = key_pos + 1
                 continue
             
-            # Extract potential JSON objects from JavaScript
-            json_candidates = extract_json_from_js(tag_text)
+            # Find the end of the JSON object
+            json_end = json_start + 1
+            brace_count = 1
+            in_string = False
+            escape_next = False
             
-            # Try to parse each candidate as JSON
-            for candidate in json_candidates:
+            while json_end < len(text) and brace_count > 0:
+                char = text[json_end]
+                
+                if escape_next:
+                    escape_next = False
+                elif char == '\\':
+                    escape_next = True
+                elif char == '"' and not escape_next:
+                    in_string = not in_string
+                elif not in_string:
+                    if char == '{':
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                
+                json_end += 1
+            
+            if brace_count == 0:
+                candidate = text[json_start:json_end]
+                candidates.append(candidate)
+            
+            pos = key_pos + 1
+        
+        return candidates
+    
+    target_pattern = f'"{target_key}"'
+    
+    for tag in result_set:
+        try:
+            tag_text = tag.get_text() if hasattr(tag, 'get_text') else str(tag)
+            
+            # Ultra-fast string check
+            if target_pattern not in tag_text or len(tag_text) < 50:
+                continue
+            
+            # Find JSON candidates
+            candidates = find_json_with_key(tag_text, target_key)
+            
+            # Parse candidates
+            for candidate in candidates:
                 try:
-                    # Clean up the candidate
-                    cleaned_candidate = candidate.rstrip(';').strip()
-                    
-                    # Skip obviously invalid candidates
-                    if not cleaned_candidate.startswith('{') or not cleaned_candidate.endswith('}'):
-                        continue
-                    
-                    # Try to parse as JSON
-                    data = json.loads(cleaned_candidate)
-                    
-                    # Search for the target key recursively
+                    data = json.loads(candidate)
                     result = find_key_in_dict(data, target_key)
                     if result is not None:
                         return result
-                        
                 except json.JSONDecodeError:
-                    # This candidate wasn't valid JSON, continue to next
                     continue
                     
         except (AttributeError, TypeError):
-            # Skip tags that don't have text content or other issues
             continue
     
-    # Return None if no match found
     return None
