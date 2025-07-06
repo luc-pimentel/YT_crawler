@@ -1,0 +1,19 @@
+{
+  "name": "basic-node-server",
+  "version": "1.0.0",
+  "description": "A basic Node.js server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["node", "server", "express"],
+  "author": "",
+  "license": "MIT"
+}
