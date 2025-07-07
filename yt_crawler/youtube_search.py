@@ -174,13 +174,14 @@ class SearchMixin:
         return current_url
     
 
-    def search(self, search_term: str, n_videos: int = 100, upload_date: str | None = None, duration: str | None = None, features: str | None = None, sort_by: str = 'relevance') -> dict[str, Any]:
+    def search(self, search_term: str, n_videos: int = 100, max: int | None = None, upload_date: str | None = None, duration: str | None = None, features: str | None = None, sort_by: str = 'relevance') -> dict[str, Any]:
         """
         Search YouTube videos
         
         Args:
             search_term (str): Search query
-            n_videos (int): Number of videos to retrieve
+            n_videos (int): Number of videos to retrieve (deprecated, use max instead)
+            max (int, optional): Maximum number of results to return (similar to YouTube API's maxResults)
             upload_date (str): Upload date filter - one of 'last_hour', 'today', 'this_week', 'this_month', 'this_year'
             duration (str): Duration filter - one of 'under_4_minutes', '4_20_minutes', 'over_20_minutes'
             features (str): Features filter - one of 'live', '4k', 'hd', 'subtitles_cc', 'creative_commons', '360', 'vr180', '3d', 'hdr', 'location', 'purchased'
@@ -189,6 +190,9 @@ class SearchMixin:
         Returns:
             dict: Search results
         """
+        
+        # Use max parameter if provided, otherwise fallback to n_videos
+        max_results = max if max is not None else n_videos
         
         # Use the updated _get_search_url method to construct the URL with all filters
         url = self._get_search_url(search_term, upload_date, duration, features, sort_by)
@@ -216,7 +220,7 @@ class SearchMixin:
         
         # Fetch additional batches until we have enough videos
         all_videos = videos
-        while len(all_videos) < n_videos and continuation_token:
+        while len(all_videos) < max_results and continuation_token:
             try:
                 continuation_data = fetch_youtube_continuation_data(continuation_token, click_tracking_params, '/youtubei/v1/search')
 
@@ -242,4 +246,4 @@ class SearchMixin:
                 # No more continuation data available
                 break
         
-        return {'search_results': all_videos[:n_videos]}
+        return {'search_results': all_videos[:max_results]}
