@@ -1,1 +1,0 @@
-"""Tests for type validation in yt_crawler."""
