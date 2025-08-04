@@ -26,6 +26,27 @@ from .search import (
     SearchResultsModel,
 )
 
+from .comments import (
+    CommentContent,
+    CommentProperties,
+    InnertubeCommand,
+    ChannelCommand,
+    CommentAuthor,
+    EngagementToolbarStyle,
+    CommentToolbar,
+    ImageSource,
+    AvatarImage,
+    AvatarEndpoint,
+    CommentAvatar,
+    VisibilityInfo,
+    LoggingDirectivesInfo,
+    ReadMoreLogging,
+    ClientVeSpec,
+    CommentLoggingDirectives,
+    VideoComment,
+    VideoCommentsResponse,
+)
+
 __all__ = [
     "ThumbnailInfo",
     "Thumbnail", 
@@ -50,4 +71,23 @@ __all__ = [
     "OwnerBadge",
     "SearchResult",
     "SearchResultsModel",
+    # Comments models
+    "CommentContent",
+    "CommentProperties",
+    "InnertubeCommand",
+    "ChannelCommand",
+    "CommentAuthor",
+    "EngagementToolbarStyle",
+    "CommentToolbar",
+    "ImageSource",
+    "AvatarImage",
+    "AvatarEndpoint",
+    "CommentAvatar",
+    "VisibilityInfo",
+    "LoggingDirectivesInfo",
+    "ReadMoreLogging",
+    "ClientVeSpec",
+    "CommentLoggingDirectives",
+    "VideoComment",
+    "VideoCommentsResponse",
 ]
