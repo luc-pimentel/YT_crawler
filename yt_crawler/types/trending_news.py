@@ -1,7 +1,3 @@
-# Auto-generated model validation test
-import json
-from pydantic import ValidationError
-
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -12,7 +8,8 @@ from .search import Thumbnail, TextWithRuns, SimpleText, NavigationEndpoint, Acc
 
 class TrendingNewsTitle(BaseModel):
     """Title for trending news section."""
-    simpleText: str = Field(..., description="Simple text content for news section title")
+    simpleText: Optional[str] = Field(None, description="Simple text content for news section title")
+    runs: Optional[List[Dict[str, Any]]] = Field(None, description="Text runs for formatted title")
 
 
 class OwnerBadge(BaseModel):
@@ -62,8 +59,8 @@ class VideoRenderer(BaseModel):
     title: TextWithRuns = Field(..., description="Video title with runs and accessibility")
     descriptionSnippet: Optional[TextWithRuns] = Field(None, description="Video description snippet")
     longBylineText: TextWithRuns = Field(..., description="Long byline text (channel name)")
-    publishedTimeText: SimpleText = Field(..., description="Published time text")
-    lengthText: SimpleText = Field(..., description="Video length text")
+    publishedTimeText: Optional[SimpleText] = Field(None, description="Published time text (optional for live streams)")
+    lengthText: Optional[SimpleText] = Field(None, description="Video length text (optional for live streams)")
     viewCountText: SimpleText = Field(..., description="View count text")
     navigationEndpoint: NavigationEndpoint = Field(..., description="Navigation endpoint for video")
     ownerBadges: Optional[List[OwnerBadge]] = Field(None, description="Owner badges (e.g., verified)")
@@ -176,24 +173,3 @@ __all__ = [
     "TrendingNewsSection",
     "TrendingNewsResponse",
 ]
-
-# Load test data from JSON file
-with open(r"C:\Users\Lucas\Documents\2. Areas\youtube_data_hoarder\YT_crawler\trending_news.json", 'r') as f:
-    test_data = json.load(f)
-
-# Test with original data - works with both Pydantic v1 and v2
-try:
-    # Try Pydantic v2 first, fallback to v1
-    try:
-        instance = TrendingNewsTitle.model_validate(test_data)  # Pydantic v2
-        print("Using Pydantic v2")
-    except AttributeError:
-        instance = TrendingNewsTitle.parse_obj(test_data)  # Pydantic v1
-        print("Using Pydantic v1")
-    
-    print(f"Success: Model parsed correctly - {instance}")
-    print("RESULT: PASS")
-    
-except Exception as e:
-    print(f"Error: {str(e)}")
-    print("RESULT: FAIL")

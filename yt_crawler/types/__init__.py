@@ -47,6 +47,28 @@ from .comments import (
     VideoCommentsResponse,
 )
 
+from .trending_news import (
+    TrendingNewsTitle,
+    OwnerBadge as TrendingOwnerBadge,
+    ThumbnailOverlay,
+    RichThumbnail,
+    Avatar,
+    ChannelThumbnailRenderer,
+    ChannelThumbnailSupportedRenderers,
+    Menu,
+    VideoRenderer,
+    ContentRenderer,
+    RichItemRenderer,
+    TrendingNewsContent,
+    ButtonIcon,
+    ButtonAccessibility,
+    ButtonRenderer,
+    ShowMoreButton,
+    ShowLessButton,
+    TrendingNewsSection,
+    TrendingNewsResponse,
+)
+
 __all__ = [
     "ThumbnailInfo",
     "Thumbnail", 
@@ -90,4 +112,24 @@ __all__ = [
     "CommentLoggingDirectives",
     "VideoComment",
     "VideoCommentsResponse",
+    # Trending news models
+    "TrendingNewsTitle",
+    "TrendingOwnerBadge",
+    "ThumbnailOverlay",
+    "RichThumbnail",
+    "Avatar",
+    "ChannelThumbnailRenderer",
+    "ChannelThumbnailSupportedRenderers",
+    "Menu",
+    "VideoRenderer",
+    "ContentRenderer",
+    "RichItemRenderer",
+    "TrendingNewsContent",
+    "ButtonIcon",
+    "ButtonAccessibility",
+    "ButtonRenderer",
+    "ShowMoreButton",
+    "ShowLessButton",
+    "TrendingNewsSection",
+    "TrendingNewsResponse",
 ]
