@@ -27,12 +27,25 @@ class CommentProperties(BaseModel):
     translate_button_entity_key: str = Field(..., alias="translateButtonEntityKey", description="Translation button entity key")
 
 
+class BrowseEndpoint(BaseModel):
+    """Browse endpoint for navigation."""
+    
+    browse_id: str = Field(..., alias="browseId", description="Browse identifier")
+    canonical_base_url: str = Field(..., alias="canonicalBaseUrl", description="Canonical base URL")
+
+
+class CommandMetadata(BaseModel):
+    """Command metadata information."""
+    
+    web_command_metadata: Dict[str, Any] = Field(..., alias="webCommandMetadata", description="Web command metadata")
+
+
 class InnertubeCommand(BaseModel):
     """Innertube command for navigation."""
     
-    clickTrackingParams: Optional[str] = Field(None, description="Click tracking parameters")
-    commandMetadata: Optional[Dict[str, Any]] = Field(None, description="Command metadata")
-    browseEndpoint: Optional[Dict[str, Any]] = Field(None, description="Browse endpoint information")
+    click_tracking_params: str = Field(..., alias="clickTrackingParams", description="Click tracking parameters")
+    command_metadata: CommandMetadata = Field(..., alias="commandMetadata", description="Command metadata")
+    browse_endpoint: BrowseEndpoint = Field(..., alias="browseEndpoint", description="Browse endpoint information")
 
 
 class ChannelCommand(BaseModel):
@@ -111,7 +124,7 @@ class CommentAvatar(BaseModel):
 class VisibilityInfo(BaseModel):
     """Visibility information."""
     
-    types: str = Field(..., description="Visibility types")
+    types: str = Field(..., description="Visibility types as numeric string")
 
 
 class LoggingDirectivesInfo(BaseModel):
@@ -131,8 +144,8 @@ class ReadMoreLogging(BaseModel):
 class ClientVeSpec(BaseModel):
     """Client VE specification."""
     
-    ui_type: str = Field(..., alias="uiType", description="UI type identifier")
-    ve_counter: str = Field(..., alias="veCounter", description="VE counter")
+    ui_type: int = Field(..., alias="uiType", description="UI type identifier as integer")
+    ve_counter: int = Field(..., alias="veCounter", description="VE counter as integer")
 
 
 class CommentLoggingDirectives(BaseModel):

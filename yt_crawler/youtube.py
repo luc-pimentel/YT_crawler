@@ -4,9 +4,10 @@ from .youtube_comments import CommentsMixin
 from .youtube_transcript import TranscriptMixin
 from .youtube_news import NewsMixin
 from .youtube_trending import TrendingMixin
+from .youtube_playlist import PlaylistMixin
 from typing import Any
 
-class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, TrendingMixin):
+class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, TrendingMixin, PlaylistMixin):
 
     def get_video_details(self, video_id: str) -> dict[str, Any]:
         """
