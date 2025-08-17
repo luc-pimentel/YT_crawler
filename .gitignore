@@ -175,3 +175,40 @@ cython_debug/
 *.ipynb
 *.json
 .claude/
+
+# Logs
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+.DS_Store
+
+# Task files
+# tasks.json
+# tasks/
+
+# Task Master configuration
+.taskmaster/
+
+# Cursor IDE configuration
+.cursor/
+
+# Environment template file
+.env.example
+
+# Script files
+*.bat
+*.sh 
