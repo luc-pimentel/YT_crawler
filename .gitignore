@@ -196,10 +196,6 @@ node_modules/
 # OS specific
 .DS_Store
 
-# Task files
-# tasks.json
-# tasks/
-
 # Task Master configuration
 .taskmaster/
 
@@ -212,3 +208,7 @@ node_modules/
 # Script files
 *.bat
 *.sh 
+
+# Task files
+# tasks.json
+# tasks/ 

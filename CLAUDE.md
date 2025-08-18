@@ -94,3 +94,7 @@ comments = yt.get_comments("VIDEO_ID", n_comments=100)
 - All mixins are combined in the main `YoutubeAPI` class
 - Comprehensive test coverage including real API validation
 - Type definitions provide strict contracts for all YouTube data structures
+
+## Task Master AI Instructions
+**Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
+@./.taskmaster/CLAUDE.md
