@@ -8,6 +8,12 @@ from .youtube_playlist import PlaylistMixin
 from typing import Any
 
 class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, TrendingMixin, PlaylistMixin):
+    """
+    YouTube scraping API with multiple functionality mixins.
+    
+    Note: Trending-related methods (get_trending_videos) are deprecated
+    due to YouTube's deprecation of trending feed endpoints.
+    """
 
     def get_video_details(self, video_id: str) -> dict[str, Any]:
         """

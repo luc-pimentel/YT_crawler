@@ -1,4 +1,5 @@
 from .utils import *
+import warnings
 
 
 trending_category_dict = {'now': 0,
@@ -13,12 +14,28 @@ class TrendingMixin:
         """
         Scrapes YouTube trending videos and returns them in a structured format.
         
+        .. deprecated:: 
+            YouTube has deprecated the trending feed endpoints (/feed/trending). 
+            This method may no longer work as expected and could fail at any time.
+            YouTube's trending page may have been removed or significantly changed.
+        
         Args:
             category (str): Trending category to fetch. Options: 'now', 'music', 'gaming', 'movies'
         
         Returns:
             dict: Dictionary containing trending videos list
+            
+        Raises:
+            Exception: If YouTube's trending endpoints are no longer available
         """
+        # Issue deprecation warning
+        warnings.warn(
+            "YouTube has deprecated the trending feed endpoints (/feed/trending). "
+            "This method may no longer work as expected and could fail at any time. "
+            "YouTube's trending page may have been removed or significantly changed.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         # Validate category
         if category not in trending_category_dict:
             raise ValueError(f"Invalid category '{category}'. Valid options: {list(trending_category_dict.keys())}")
