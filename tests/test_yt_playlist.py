@@ -100,3 +100,61 @@ class TestYoutubePlaylist:
         assert 'videoId' in renderer, "First video should have videoId"
         assert 'title' in renderer, "First video should have title"
         assert 'thumbnail' in renderer, "First video should have thumbnail"
+    
+    def test_get_playlist_details_success(self, youtube_api: YoutubeAPI):
+        """Test that get_playlist_details works with a valid playlist ID and returns populated data"""
+        # Use a known YouTube playlist ID (same as video tests for consistency)
+        playlist_id = "PLZXffy-ZvjZlYVoiACyccatARtwXOyt48"
+        
+        # Call the function - this should not raise any exceptions
+        result = youtube_api.get_playlist_details(playlist_id)
+        
+        # Verify the result is a dictionary
+        assert isinstance(result, dict), "Result should be a dictionary"
+        
+        # Verify the dictionary is not empty
+        assert len(result) > 0, "Result should not be empty"
+        assert result, "Result should be truthy (not empty)"
+        
+        # Verify the dictionary contains the 'playlist_details' key
+        assert 'playlist_details' in result, "Result should contain 'playlist_details' key"
+        
+        # Verify the playlist_details value is a dictionary
+        playlist_details = result['playlist_details']
+        assert isinstance(playlist_details, dict), "playlist_details should be a dictionary"
+        
+        # Verify the playlist_details contains the expected keys
+        assert 'title' in playlist_details, "playlist_details should contain 'title' key"
+        assert 'metadata' in playlist_details, "playlist_details should contain 'metadata' key"
+        
+        # Verify only the expected keys are present (should only have title and metadata)
+        expected_keys = {'title', 'metadata'}
+        actual_keys = set(playlist_details.keys())
+        assert actual_keys == expected_keys, f"playlist_details should only contain {expected_keys}, but got {actual_keys}"
+        
+        # Verify both keys have actual content (not None/empty)
+        assert playlist_details['title'], "title should have content"
+        assert playlist_details['metadata'], "metadata should have content"
+    
+    def test_get_playlist_details_with_different_playlist(self, youtube_api: YoutubeAPI):
+        """Test with a different playlist to ensure the function works with various playlists"""
+        # Use the same playlist ID for now, but you could test with others
+        playlist_id = "PLZXffy-ZvjZlYVoiACyccatARtwXOyt48"
+        
+        # Call the function
+        result = youtube_api.get_playlist_details(playlist_id)
+        
+        # Basic structure validation
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert 'playlist_details' in result, "Result should contain 'playlist_details' key"
+        assert isinstance(result['playlist_details'], dict), "playlist_details should be a dictionary"
+        assert len(result['playlist_details']) > 0, "playlist_details should not be empty"
+        
+        # Check that we can access the expected keys
+        playlist_details = result['playlist_details']
+        assert 'title' in playlist_details, "playlist_details should have title"
+        assert 'metadata' in playlist_details, "playlist_details should have metadata"
+        
+        # Verify content exists
+        assert playlist_details['title'], "title should have content"
+        assert playlist_details['metadata'], "metadata should have content"
