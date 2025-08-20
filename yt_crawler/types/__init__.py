@@ -102,7 +102,7 @@ from .playlist import (
     PlaylistVideosResponse,
 )
 
-from .playlist_scripts import (
+from .playlist_details import (
     ClientVeSpec as PlaylistScriptsClientVeSpec,
     Visibility as PlaylistScriptsVisibility,
     LoggingDirectives as PlaylistScriptsLoggingDirectives,
@@ -135,7 +135,7 @@ from .playlist_scripts import (
     ContentMetadataViewModel,
     MetadataContainer,
     PlaylistDetails,
-    ScriptsData,
+    PlaylistDetailsResponse,
 )
 
 __all__ = [
@@ -265,5 +265,5 @@ __all__ = [
     "ContentMetadataViewModel",
     "MetadataContainer",
     "PlaylistDetails",
-    "ScriptsData",
+    "PlaylistDetailsResponse",
 ]

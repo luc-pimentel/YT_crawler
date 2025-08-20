@@ -233,8 +233,8 @@ class PlaylistDetails(BaseModel):
     metadata: MetadataContainer = Field(..., description="Playlist metadata container")
 
 
-class ScriptsData(BaseModel):
-    """Root model for scripts.json data structure.
+class PlaylistDetailsResponse(BaseModel):
+    """Response model for YouTube playlist details data structure.
     
     This model represents YouTube playlist UI component data extracted from JavaScript
     objects, containing structured information about playlist titles, metadata,
