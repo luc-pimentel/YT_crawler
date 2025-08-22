@@ -5,9 +5,10 @@ from .youtube_transcript import TranscriptMixin
 from .youtube_news import NewsMixin
 from .youtube_trending import TrendingMixin
 from .youtube_playlist import PlaylistMixin
+from .youtube_channels import YouTubeChannelsMixin
 from typing import Any
 
-class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, TrendingMixin, PlaylistMixin):
+class YoutubeAPI(SearchMixin, CommentsMixin, TranscriptMixin, NewsMixin, TrendingMixin, PlaylistMixin, YouTubeChannelsMixin):
     """
     YouTube scraping API with multiple functionality mixins.
     
